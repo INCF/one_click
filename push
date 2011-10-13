@@ -1,0 +1,55 @@
+#!/usr/bin/python
+
+import sys
+import os
+import tempfile
+import shutil
+import subprocess
+import dicom
+
+progname = os.path.basename(sys.argv[0])
+
+if len(sys.argv) != 5:
+    print 'usage:%s dir user subject session' % progname
+    sys.exit(1)
+
+(dir, user, subject, session) = sys.argv[1:]
+
+staged_files = []
+
+tempdir = tempfile.mkdtemp()
+try:
+    shutil.copytree(dir, '%s/source' % tempdir)
+    os.mkdir('%s/staged' % tempdir)
+    i = 0
+    for (dirpath, dirnames, filenames) in os.walk(tempdir):
+        if dirpath == '%s/staged' % tempdir:
+            continue
+        for fname in filenames:
+            ffname = '%s/%s' % (dirpath, fname)
+            print ffname
+            try:
+                do = dicom.read_file(ffname)
+                do.StudyDescription = 'incf:%s' % user
+                do.PatientsName = subject
+                do.PatientID = session
+# del do[0xgp, 0xel] not working for me
+#                tag = do.data_element('PerformingPhysiciansName').tag
+#                del do[tag]
+                out_fname = '%s/staged/%08d' % (tempdir, i)
+                i += 1
+                dicom.write_file(out_fname, do)
+                staged_files.append(out_fname)
+            except:
+                continue
+            print ffname
+finally:
+    shutil.rmtree(tempdir)
+
+args = ['storescu', '-v', '-aec', 'XNAT', 'xnat.incf.org', '104']
+args.extend(staged_files)
+subprocess.call(args)
+
+sys.exit(0)
+
+# eof
