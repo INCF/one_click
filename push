@@ -43,12 +43,11 @@ try:
             except:
                 continue
             print ffname
+    args = ['storescu', '-v', '-aec', 'XNAT', 'xnat.incf.org', '104']
+    args.extend(staged_files)
+    subprocess.call(args)
 finally:
     shutil.rmtree(tempdir)
-
-args = ['storescu', '-v', '-aec', 'XNAT', 'xnat.incf.org', '104']
-args.extend(staged_files)
-subprocess.call(args)
 
 sys.exit(0)
 
