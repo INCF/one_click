@@ -54,14 +54,11 @@ if len(sys.argv) == 1:
 
 session = prearchive.Session(sys.argv[1])
 
-if devel:
-    (ident, user) = ('incf', 'xnat')
-else:
-    try:
-        (ident, user) = session.study_description.split(':', 2)
-    except ValueError:
-        print 'HANDLE: bad session (no incf)'
-        sys.exit(1)
+try:
+    (ident, user) = session.study_description.split(':', 2)
+except ValueError:
+    print 'HANDLE: bad session (no incf)'
+    sys.exit(1)
 
 if ident.strip().lower() != 'incf':
     print 'HANDLE: bad ident'
