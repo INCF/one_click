@@ -6,48 +6,12 @@ import urllib
 import weakref
 import smtplib
 import xml.dom.minidom
-import ldap.filter
-import psycopg2
 import json
 import dicom
 
 auth = open('/home/ch/.xnat_pw').read().strip().encode('base64').strip()
 host = 'xnat.incf.org'
 mail_host = 'luna.incf.ki.se'
-db_name = 'xnat'
-db_user = 'xnat'
-
-user_meta_data_query = """INSERT INTO xdat_user_meta_data (last_modified, 
-                                                           status, 
-                                                           activation_date, 
-                                                           insert_date, 
-                                                           modified, 
-                                                           meta_data_id, 
-                                                           shareable) 
-                          VALUES (now(), 
-                                  'active', 
-                                  now(), 
-                                  now(), 
-                                  1, 
-                                                                    NEXTVAL('xdat_user_meta_data_meta_data_id_seq'), 
-                                  1)"""
-
-insert_user_query = """INSERT INTO xdat_user (login, 
-                                              firstname, 
-                                              lastname, 
-                                              email, 
-                                              quarantine_path, 
-                                              enabled, 
-                                              user_info, 
-                                              xdat_user_id) 
-                       VALUES (%(login)s, 
-                               %(firstname)s, 
-                               %(lastname)s, 
-                               %(email)s, 
-                               %(quarantine_path)s, 
-                               1, 
-                               CURRVAL('xdat_user_meta_data_meta_data_id_seq'), 
-                               NEXTVAL('xdat_user_xdat_user_id_seq'))"""
 
 class PrearchiveError(Exception):
     "base class for prearchive exceptions"
@@ -56,9 +20,10 @@ class RequestError(PrearchiveError):
 
     "HTTP (REST) request error"
 
-    def __init__(self, request, response):
+    def __init__(self, request, response, data):
         self.request = request
         self.response = response
+        self.data = data
         return
 
     def __str__(self):
@@ -221,24 +186,24 @@ class Session:
             for node in self.doc.getElementsByTagName('xnat:scan'):
                 self.scans.append(_Scan(self, node))
             return self.scans
-        if name == 'incf_user':
-            self.incf_user = self._get_submitting_user()
-            return self.incf_user
+        if name == 'study_description':
+            self.study_description = self._get_study_description()
+            return self.study_description
         raise AttributeError, "Session instance has no attribute '%s'" % name
 
-    def _get_submitting_user(self):
-        "return the INCF username as specified in the study comments or None"
+    def _get_study_description(self):
+        "return the first study description found or None"
         for s in self.scans:
             for f in s.files:
                 if f.format != 'DICOM':
                     continue
                 for entry in f.entries:
                     try:
-                        (ident, val) = entry.dicom.StudyDescription.split(':', 2)
-                        if ident.strip().lower() == 'incf':
-                            return val.strip()
+                        val = entry.dicom.StudyDescription
                     except:
                         pass
+                    else:
+                        return val
         return None
 
     def _update_dict(self, d):
@@ -284,10 +249,6 @@ class Session:
         request('POST', '/data/services/archive', body)
         return
 
-    def get_errors(self):
-        """return a list of errors (like insufficient deidentification) that prevent archiving"""
-        raise NotImplementedError
-
 def all_sessions():
     data = request('GET', '/data/prearchive/projects')
     sessions = [ Session(d) for d in json.loads(data)['ResultSet']['Result'] ]
@@ -300,67 +261,10 @@ def request(method, url, body=None):
                'Content-Type': 'application/x-www-form-urlencoded'}
     hc.request(method, url, headers=headers, body=body)
     response = hc.getresponse()
-    if response.status != 200:
-        raise RequestError(request, response)
     data = response.read()
     hc.close()
+    if response.status != 200:
+        raise RequestError(request, response, data)
     return data
-
-def get_ldap_user(uid):
-    """return a (dn, attrs) tuple from ldap.search_s()
-
-    raises ValueError if zero or more than one results are returned
-    """
-    filter = '(uid=%s)' % ldap.filter.escape_filter_chars(uid)
-    print filter
-    l = ldap.initialize(ldap.functions.get_option(ldap.OPT_URI))
-    l.simple_bind_s()
-    try:
-        res = l.search_s('ou=people,dc=incf,dc=org', ldap.SCOPE_SUBTREE, filter)
-        if not res:
-            raise ValueError, "can't find LDAP uid %s" % uid
-        if len(res) > 1:
-            raise ValueError, 'multiple LDAP results for uid %s' % uid
-    finally:
-        l.unbind()
-    return res[0]
-
-def create_user(dn, user_dict):
-    """insert an LDAP user placeholder in the XNAT database
-
-    does nothing if the user already exists
-    """
-    db = psycopg2.connect(database=db_name, user=db_user)
-    try:
-        c = db.cursor()
-        query = "SELECT * FROM xdat_user WHERE login = %(login)s"
-        params = {'login': user_dict['uid'][0].lower()}
-        c.execute(query, params)
-        if c.rowcount > 0:
-            db.close()
-            return
-        c.close()
-    except:
-        db.rollback()
-        db.close()
-        raise
-    try:
-        params = {'login': user_dict['uid'][0].lower(), 
-                  'firstname': user_dict['givenName'][0], 
-                  'lastname': user_dict['sn'][0], 
-                  'email': user_dict['mail'][0], 
-                  'quarantine_path': dn}
-        c = db.cursor()
-        c.execute(user_meta_data_query, params)
-        c.execute(insert_user_query, params)
-        c.close()
-    except:
-        db.rollback()
-        db.close()
-        raise
-    else:
-        db.commit()
-        db.close()
-    return
 
 # eof
