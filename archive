@@ -1,0 +1,132 @@
+#!/usr/bin/python
+
+import sys
+import os
+import psycopg2
+import ldap.filter
+import pyxnat
+import prearchive
+
+devel = True
+
+progname = os.path.basename(sys.argv[0])
+
+pyxnat_server = 'http://xnat.incf.org/xnat/'
+(pyxnat_user, pyxnat_pw) = open('/home/ch/.xnat_pw').read().strip().split(':')
+db_name = 'xnat'
+db_user = 'xnat'
+
+user_meta_data_query = """INSERT INTO xdat_user_meta_data (last_modified, 
+                                                           status, 
+                                                           activation_date, 
+                                                           insert_date, 
+                                                           modified, 
+                                                           meta_data_id, 
+                                                           shareable) 
+                          VALUES (now(), 
+                                  'active', 
+                                  now(), 
+                                  now(), 
+                                  1, 
+                                  NEXTVAL('xdat_user_meta_data_meta_data_id_seq'), 
+                                  1)"""
+
+insert_user_query = """INSERT INTO xdat_user (login, 
+                                              firstname, 
+                                              lastname, 
+                                              email, 
+                                              quarantine_path, 
+                                              enabled, 
+                                              user_info, 
+                                              xdat_user_id) 
+                       VALUES (%(login)s, 
+                               %(firstname)s, 
+                               %(lastname)s, 
+                               %(email)s, 
+                               %(quarantine_path)s, 
+                               1, 
+                               CURRVAL('xdat_user_meta_data_meta_data_id_seq'), 
+                               NEXTVAL('xdat_user_xdat_user_id_seq'))"""
+
+if len(sys.argv) == 1:
+    print 'usage: %s <prearchive session url>' % progname
+    sys.exit(0)
+
+session = prearchive.Session(sys.argv[1])
+
+if devel:
+    (ident, user) = ('incf', 'xnat')
+else:
+    try:
+        (ident, user) = session.study_description.split(':', 2)
+    except ValueError:
+        print 'HANDLE: bad session (no incf)'
+        sys.exit(1)
+
+if ident.strip().lower() != 'incf':
+    print 'HANDLE: bad ident'
+    sys.exit(1)
+
+user = user.strip()
+
+interface = pyxnat.Interface(server=pyxnat_server, 
+                             user=pyxnat_user, 
+                             password=pyxnat_pw)
+
+if user not in interface.manage.users():
+    filter = '(uid=%s)' % ldap.filter.escape_filter_chars(user)
+    l = ldap.initialize(ldap.functions.get_option(ldap.OPT_URI))
+    l.simple_bind_s()
+    try:
+        res = l.search_s('ou=people,dc=incf,dc=org', ldap.SCOPE_SUBTREE, filter)
+        if not res:
+            print 'HANDLE: user not found at all'
+            sys.exit(1)
+        if len(res) > 1:
+            print 'HANDLE: multiple LDAP users'
+            sys.exit(1)
+        print res
+    finally:
+        l.unbind()
+    (dn, user_dict) = res[0]
+    db = psycopg2.connect(database=db_name, user=db_user)
+    try:
+        params = {'login': user_dict['uid'][0].lower(), 
+                  'firstname': user_dict['givenName'][0], 
+                  'lastname': user_dict['sn'][0], 
+                  'email': user_dict['mail'][0], 
+                  'quarantine_path': dn}
+        c = db.cursor()
+        c.execute(user_meta_data_query, params)
+        c.execute(insert_user_query, params)
+        c.close()
+    except:
+        db.rollback()
+        db.close()
+        raise
+    else:
+        db.commit()
+        db.close()
+
+project_name = 'u_%s' % user
+user = 'queued'
+project = interface.select('/projects/%s' % project_name)
+if not project.exists():
+    project.create()
+    project.add_user('xnat', role='owner')
+    project.set_accessibility(accessibility='private')
+    project.remove_user(pyxnat_user)
+
+print 'HANDLE: not deidentified'
+
+#sys.exit(2)
+
+session.move(project_name)
+
+print 'HANDLE: session exists'
+
+session.archive()
+
+sys.exit(0)
+
+# eof
