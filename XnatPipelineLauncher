@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# See file COPYING distributed with the xnnppx package for the copyright 
+# and license.
+
+pipeline_home=/home/ch/xnat/pipeline
+
+xml=`echo "$@" | tr ' ' '\n' | grep -A 1 -e '-pipeline' | tail -1`
+py=`echo "$xml" | sed 's/xml$/py/'`
+
+if [ -f $py ]
+then
+    /home/ch/arc-queue/arc-qadd $pipeline_home/bin/XnatPythonLauncher "$@" || exit 1
+else
+    /home/ch/arc-queue/arc-qadd $pipeline_home/bin/XnatPipelineLauncher.orig "$@" || exit 1
+    if [ $xml = xnat_tools/AutoRun.xml ]
+    then
+        # qc pipeline goes here
+        /home/ch/arc-queue/arc-qadd echo continue || exit 1
+    fi
+fi
+
+exit 0
+
+# eof
