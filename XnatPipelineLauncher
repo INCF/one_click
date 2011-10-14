@@ -5,7 +5,22 @@
 
 pipeline_home=/home/ch/xnat/pipeline
 
-xml=`echo "$@" | tr ' ' '\n' | grep -A 1 -e '-pipeline' | tail -1`
+# call with command-line arguments and a target flag:
+# get_parameter_value -pipeline "$@"
+# returns the argument after "-pipeline"
+get_parameter_value()
+{
+
+    target="$1"
+    shift
+
+    echo "$@" | tr ' ' '\n' | grep -A 1 -e "$target" | tail -1
+
+    return
+
+} # end get_parameter_value()
+
+xml=`get_parameter_value -pipeline "$@"`
 py=`echo "$xml" | sed 's/xml$/py/'`
 
 if [ -f $py ]
@@ -16,7 +31,9 @@ else
     if [ $xml = xnat_tools/AutoRun.xml ]
     then
         # qc pipeline goes here
-        /home/ch/arc-queue/arc-qadd echo continue || exit 1
+        project=`get_parameter_value -project "$@"`
+        id=`get_parameter_value -id "$@"`
+        /home/ch/arc-queue/arc-qadd /home/ch/one_click/run_qc $project $id || exit 1
     fi
 fi
 
