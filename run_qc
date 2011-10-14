@@ -2,12 +2,50 @@
 
 import sys
 import os
+import tempfile
+import shutil
 import xml.dom.minidom
 import subprocess
+import traceback
 import pyxnat
+
+def run_qc(scan, dicom_catalog, tempdir):
+    if scan.id() != '1201':
+        raise ValueError
+    return
+    catalog_doc = xml.dom.minidom.parse(dicom_catalog)
+    dicom_dir = os.path.dirname(dicom_catalog)
+    dicom_files = []
+    for entry in catalog_doc.getElementsByTagName('cat:entry'):
+        dicom_files.append(entry.getAttribute('URI'))
+    xcede_fname = '%s/%s.xcede' % (tempdir, scan.id())
+    args = ['dicom2bxh', '--xcede']
+    args.extend(dicom_files)
+    args.append(xcede_fname)
+    print subprocess.check_call(args, cwd=dicom_dir)
+    res = scan.resource('XCEDE')
+    res.attrs.mset({'format': 'XCEDE'})
+    res.file(os.path.basename(xcede_fname)).put(xcede_fname)
+    output_dir = '%s/%s' % (tempdir, scan.id())
+    args = ['fmriqa_generate.pl', '--verbose', xcede_fname, output_dir]
+    print subprocess.check_call(args)
+    res = scan.resource('QC')
+    for fname in os.listdir(output_dir):
+        ffname = '%s/%s' % (output_dir, fname)
+        res.file(fname).put(ffname)
+    return
+
+def mk_qc_dir(project, experiment):
+    path = qc_web_root
+    for subdir in (project, experiment):
+        path = '%s/%s' % (path, subdir)
+        if not os.path.exists(path):
+            os.mkdir(path)
+    return path
 
 pyxnat_server = 'http://xnat.incf.org/xnat/'
 (pyxnat_user, pyxnat_pw) = open('/home/ch/.xnat_pw').read().strip().split(':')
+qc_web_root = '/var/www/qc'
 
 progname = os.path.basename(sys.argv[0])
 
@@ -36,29 +74,39 @@ if not experiment:
     print 'HANDLE'
     sys.exit(1)
 
-#print experiment.get()
-
 for scan in experiment.scans():
+    print scan
     doc = xml.dom.minidom.parseString(scan.get())
     dicom_catalog = None
     for el in doc.getElementsByTagName('xnat:file'):
-        if el.getAttribute('format') == 'DICOM':
+        if el.getAttribute('label') == 'DICOM':
             dicom_catalog = el.getAttribute('URI')
+            break
     if not dicom_catalog:
+        print
         continue
-    catalog_doc = xml.dom.minidom.parse(dicom_catalog)
-    dicom_dir = os.path.dirname(dicom_catalog)
-    dicom_files = []
-    for entry in catalog_doc.getElementsByTagName('cat:entry'):
-        dicom_files.append(entry.getAttribute('URI'))
-    xcede_fname = '/tmp/ch/%s.xcede' % scan.id()
-    args = ['dicom2bxh', '--xcede']
-    args.extend(dicom_files)
-    args.append(xcede_fname)
-    print subprocess.call(args, cwd=dicom_dir)
-    output_dir = '/tmp/ch/%s' % scan.id()
-    args = ['fmriqa_generate.pl', '--verbose', xcede_fname, output_dir]
-    print subprocess.call(args)
+    tempdir = tempfile.mkdtemp()
+    try:
+        run_qc(scan, dicom_catalog, tempdir)
+    except:
+        print traceback.print_exc()
+        print
+        continue
+    else:
+        print 'else'
+    finally:
+        print 'finally'
+        shutil.rmtree(tempdir)
+    doc = xml.dom.minidom.parseString(scan.get())
+    qc_catalog = None
+    for el in doc.getElementsByTagName('xnat:file'):
+        if el.getAttribute('label') == 'QC':
+            qc_catalog = el.getAttribute('URI')
+            break
+    qc_web_path = mk_qc_dir(project_id, experiment_id)
+    print '%s -> %s' % (os.path.dirname(qc_catalog), 
+                        '%s/%s' % (qc_web_path, scan.id()))
+    os.symlink(os.path.dirname(qc_catalog), '%s/%s' % (qc_web_path, scan.id()))
 
 sys.exit(0)
 
