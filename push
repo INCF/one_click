@@ -63,7 +63,7 @@ try:
             dicom.write_file(out_fname, do)
             staged_files.append(out_fname)
             print '    %s' % out_fname
-    args = ['storescu', '-v', '-aec', 'XNAT', 'xnat.incf.org', '8104']
+    args = ['storescu', '-v', '-aec', 'XNAT', 'xnat.incf.org', '104']
     args.extend(staged_files)
     subprocess.call(args)
 finally:
