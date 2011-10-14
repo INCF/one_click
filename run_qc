@@ -1,0 +1,65 @@
+#!/usr/bin/python
+
+import sys
+import os
+import xml.dom.minidom
+import subprocess
+import pyxnat
+
+pyxnat_server = 'http://xnat.incf.org/xnat/'
+(pyxnat_user, pyxnat_pw) = open('/home/ch/.xnat_pw').read().strip().split(':')
+
+progname = os.path.basename(sys.argv[0])
+
+if len(sys.argv) != 3:
+    print 'usage: %s <project> <experiment ID>' % progname
+    sys.exit(1)
+
+(project_id, experiment_id) = sys.argv[1:]
+
+interface = pyxnat.Interface(server=pyxnat_server, 
+                             user=pyxnat_user, 
+                             password=pyxnat_pw)
+
+project = interface.select.project(project_id)
+if not project.exists():
+    print 'HANDLE'
+    sys.exit(1)
+
+experiment = None
+for s in project.subjects():
+    experiments = [ e for e in s.experiments(experiment_id) ]
+    if experiments:
+        experiment = experiments[0]
+
+if not experiment:
+    print 'HANDLE'
+    sys.exit(1)
+
+#print experiment.get()
+
+for scan in experiment.scans():
+    doc = xml.dom.minidom.parseString(scan.get())
+    dicom_catalog = None
+    for el in doc.getElementsByTagName('xnat:file'):
+        if el.getAttribute('format') == 'DICOM':
+            dicom_catalog = el.getAttribute('URI')
+    if not dicom_catalog:
+        continue
+    catalog_doc = xml.dom.minidom.parse(dicom_catalog)
+    dicom_dir = os.path.dirname(dicom_catalog)
+    dicom_files = []
+    for entry in catalog_doc.getElementsByTagName('cat:entry'):
+        dicom_files.append(entry.getAttribute('URI'))
+    xcede_fname = '/tmp/ch/%s.xcede' % scan.id()
+    args = ['dicom2bxh', '--xcede']
+    args.extend(dicom_files)
+    args.append(xcede_fname)
+    print subprocess.call(args, cwd=dicom_dir)
+    output_dir = '/tmp/ch/%s' % scan.id()
+    args = ['fmriqa_generate.pl', '--verbose', xcede_fname, output_dir]
+    print subprocess.call(args)
+
+sys.exit(0)
+
+# eof
