@@ -9,9 +9,12 @@ progname = os.path.basename(sys.argv[0])
 
 for session in prearchive.all_sessions():
     if session.project != 'Unassigned':
+        print '%s: not unassigned' % str(session)
         continue
     if session.status != 'READY':
+        print '%s: not ready' % str(session)
         continue
+    print '%s: moving' % str(session)
     session.move('queued')
     subprocess.check_call(['/home/ch/arc-queue/arc-qadd', 
                            '/home/ch/one_click/archive', 

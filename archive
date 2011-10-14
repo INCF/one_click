@@ -55,9 +55,9 @@ if len(sys.argv) == 1:
 session = prearchive.Session(sys.argv[1])
 
 try:
-    (ident, user) = session.study_description.split(':', 2)
+    (ident, user) = session.study_comments.split(':', 2)
 except ValueError:
-    print 'HANDLE: bad session (no incf)'
+    print 'HANDLE: bad session "%s" (no incf)' % session.study_comments
     sys.exit(1)
 
 if ident.strip().lower() != 'incf':
@@ -104,6 +104,7 @@ if user not in interface.manage.users():
     else:
         db.commit()
         db.close()
+    print 'user %s created in XNAT' % user
 
 project_name = 'u_%s' % user
 user = 'queued'
@@ -113,15 +114,18 @@ if not project.exists():
     project.add_user('xnat', role='owner')
     project.set_accessibility(accessibility='private')
     project.remove_user(pyxnat_user)
+    print 'created project %s' % project_name
 
 print 'HANDLE: not deidentified'
 
 #sys.exit(2)
 
+print 'moving session %s' % str(session)
 session.move(project_name)
 
 print 'HANDLE: session exists'
 
+print 'archiving session %s' % str(session)
 session.archive()
 
 sys.exit(0)

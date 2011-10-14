@@ -121,13 +121,13 @@ class _Scan:
     def __init__(self, session, node):
         self.session = weakref.ref(session)
         self.node = node
-        self.id = int(self.node.getAttribute('ID'))
+        self.id = self.node.getAttribute('ID')
         self.uid = self.node.getAttribute('UID')
         self.type = self.node.getAttribute('xsi:type')
         return
 
     def __str__(self):
-        return '<prearchive scan %d>' % self.id
+        return '<prearchive scan %s>' % self.id
 
     def __getattr__(self, name):
         if name == 'files':
@@ -186,12 +186,12 @@ class Session:
             for node in self.doc.getElementsByTagName('xnat:scan'):
                 self.scans.append(_Scan(self, node))
             return self.scans
-        if name == 'study_description':
-            self.study_description = self._get_study_description()
-            return self.study_description
+        if name == 'study_comments':
+            self.study_comments = self._get_study_comments()
+            return self.study_comments
         raise AttributeError, "Session instance has no attribute '%s'" % name
 
-    def _get_study_description(self):
+    def _get_study_comments(self):
         "return the first study description found or None"
         for s in self.scans:
             for f in s.files:
@@ -199,7 +199,7 @@ class Session:
                     continue
                 for entry in f.entries:
                     try:
-                        val = entry.dicom.StudyDescription
+                        val = entry.dicom.StudyComments
                     except:
                         pass
                     else:
