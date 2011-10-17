@@ -2,12 +2,12 @@
 
 import sys
 import os
-import prearchive
+import one_click
 import subprocess
 
 progname = os.path.basename(sys.argv[0])
 
-for session in prearchive.all_sessions():
+for session in one_click.all_sessions():
     if session.project != 'Unassigned':
         print '%s: not unassigned' % str(session)
         continue

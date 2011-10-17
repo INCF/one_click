@@ -5,7 +5,7 @@ import os
 import psycopg2
 import ldap.filter
 import pyxnat
-import prearchive
+import one_click
 
 devel = True
 
@@ -52,7 +52,7 @@ if len(sys.argv) == 1:
     print 'usage: %s <prearchive session url>' % progname
     sys.exit(0)
 
-session = prearchive.Session(sys.argv[1])
+session = one_click.Session(sys.argv[1])
 
 try:
     (ident, user) = session.study_comments.split(':', 2)
