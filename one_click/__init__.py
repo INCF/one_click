@@ -1,17 +1,31 @@
 """INCF XNAT prearchive module"""
 
 import os
+import shutil
 import httplib
 import urllib
 import weakref
 import smtplib
+import email.message
 import xml.dom.minidom
 import json
+import jinja2
 import dicom
 
 auth = open('/home/ch/.xnat_pw').read().strip().encode('base64').strip()
 host = 'xnat.incf.org'
 mail_host = 'luna.incf.ki.se'
+admin_email = 'xnat-admin@incf.org'
+deleted_dir = '/data/cache/DELETED'
+
+deident_tags = {(0x0008, 0x0090): "Referring Physician's Name", 
+                (0x0008, 0x0096): "Referring Physician Identification", 
+                (0x0008, 0x1048): "Physician(s) of Record", 
+                (0x0008, 0x1049): "Physician(s) of Record Identification", 
+                (0x0008, 0x1050): "Performing Physicians' Name", 
+                (0x0008, 0x1052): "Performing Physician Identification", 
+                (0x0008, 0x1060): "Name of Physician(s) Reading Study", 
+                (0x0008, 0x1062): "Physician(s) Reading Study Identification"}
 
 class PrearchiveError(Exception):
     "base class for prearchive exceptions"
@@ -36,13 +50,13 @@ def send_mail(to_addrs, subject, body):
     if not to_addrs:
         return
     message = email.message.Message()
-    message['From'] = from_email
+    message['From'] = admin_email
     for addr in to_addrs:
         message['To'] = addr
     message['Subject'] = subject
     message.set_payload(body)
     s = smtplib.SMTP(mail_host)
-    s.sendmail(from_email, to_addrs, message.as_string())
+    s.sendmail(admin_email, to_addrs, message.as_string())
     s.quit()
     return
 
@@ -245,9 +259,24 @@ class Session:
 
     def archive(self):
         """archive a session"""
-        body = urllib.urlencode({'src': self.url})
+        body = urllib.urlencode({'src': self.url, 'overwrite': 'delete'})
         request('POST', '/data/services/archive', body)
         return
+
+    def check_deidentification(self):
+        """return a list of DICOM tags that should be removed for proper deidentification"""
+        tags = set()
+        for s in self.scans:
+            for f in s.files:
+                if f.format != 'DICOM':
+                    continue
+                for entry in f.entries:
+                    for tag in deident_tags:
+                        if tag in entry.dicom:
+                            tags.add(tag)
+        tags = list(tags)
+        tags.sort()
+        return tags
 
 def all_sessions():
     data = request('GET', '/data/prearchive/projects')
@@ -266,5 +295,17 @@ def request(method, url, body=None):
     if response.status != 200:
         raise RequestError(request, response, data)
     return data
+
+def report_error(subject, body):
+    send_mail([admin_email], subject, body)
+    return
+
+def remove_deleted():
+    "removes files marked deleted by XNAT"
+    shutil.rmtree(deleted_dir)
+    return
+
+template_dir = '%s/templates' % os.path.dirname(__file__)
+template_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir))
 
 # eof
