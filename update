@@ -1,0 +1,25 @@
+#!/bin/sh
+
+progname=`basename $0`
+
+# ps to a pipe may create a subprocess that is identified as this script, 
+# so we do this in two steps
+running=`ps -ef`
+running=`echo "$running" | grep $progname | grep -v grep`
+
+if [ `echo "$running" | wc -l` -gt 1 ]
+then
+    echo "$progname: other running ${progname}s detected"
+    echo "this process is $$"
+    echo "$running"
+    exit 1
+fi
+
+rm -rf /data/cache/DELETED
+/home/ch/one_click/remove_broken_links /var/www/qc || exit 1
+/home/ch/one_click/queue || exit 1
+/home/ch/arc-queue/arc-qrunner || exit 1
+
+exit 0
+
+# eof
