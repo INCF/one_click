@@ -8,6 +8,7 @@ import xml.dom.minidom
 import subprocess
 import traceback
 import pyxnat
+import one_click
 
 def run_qc(scan, dicom_catalog, tempdir):
     catalog_doc = xml.dom.minidom.parse(dicom_catalog)
@@ -24,7 +25,7 @@ def run_qc(scan, dicom_catalog, tempdir):
     res.attrs.mset({'format': 'XCEDE'})
     res.file(os.path.basename(xcede_fname)).put(xcede_fname)
     output_dir = '%s/%s' % (tempdir, scan.id())
-    args = ['fmriqa_generate.pl', '--verbose', xcede_fname, output_dir]
+    args = ['/usr/local/bin/fmriqa_generate.pl', '--verbose', xcede_fname, output_dir]
     print subprocess.check_call(args)
     res = scan.resource('QC')
     for fname in os.listdir(output_dir):
@@ -52,11 +53,19 @@ if len(sys.argv) != 3:
 
 (project_id, experiment_id) = sys.argv[1:]
 
+if not project_id.startswith('u_'):
+    sys.stderr.write('%s: project must be a user project (starting with "u_")\n' % progname)
+    sys.exit(1)
+user = project_id[2:]
+
 interface = pyxnat.Interface(server=pyxnat_server, 
                              user=pyxnat_user, 
                              password=pyxnat_pw)
 
 project = interface.select.project(project_id)
+if not project.exists():
+    sys.stderr.write("%s: can't find project %s\n" % (progname, project_id))
+    sys.exit(1)
 
 experiment = None
 for s in project.subjects():
@@ -64,7 +73,17 @@ for s in project.subjects():
     if experiments:
         experiment = experiments[0]
 
-qc_urls = []
+if not experiment:
+    sys.stderr.write("%s: can't find experiment %s in project %s\n" % (progname, project_id, experiment_id))
+    sys.exit(1)
+
+experiment = None
+for s in project.subjects():
+    experiments = [ e for e in s.experiments(experiment_id) ]
+    if experiments:
+        experiment = experiments[0]
+
+complete_scans = []
 for scan in experiment.scans():
     print scan
     doc = xml.dom.minidom.parseString(scan.get())
@@ -98,11 +117,15 @@ for scan in experiment.scans():
     qc_link = '%s/%s' % (qc_web_path, scan.id())
     print '%s -> %s' % (qc_dir, qc_link)
     os.symlink(qc_dir, qc_link)
-    qc_urls.append(qc_link)
+    complete_scans.append(scan.id())
 
-print qc_urls
+email = interface.manage.users.email(user)
 
-print 'HANDLE SUCCESS'
+template = one_click.template_env.get_template('qc')
+body = template.render(project=project_id, 
+                       experiment=experiment_id, 
+                       scans=complete_scans)
+one_click.send_mail([email], 'QC report', body)
 
 sys.exit(0)
 
