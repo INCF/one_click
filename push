@@ -8,6 +8,19 @@ import subprocess
 import uuid
 import dicom
 
+deident_tags = [(0x0008, 0x0090), # Referring Physician's Name
+                (0x0008, 0x0096), # Referring Physician Identification
+                (0x0008, 0x1048), # Physician(s) of Record
+                (0x0008, 0x1049), # Physician(s) of Record Identification
+                (0x0008, 0x1050), # Performing Physicians' Name
+                (0x0008, 0x1052), # Performing Physician Identification
+                (0x0008, 0x1060), # Name of Physician(s) Reading Study
+                (0x0008, 0x1062), # Physician(s) Reading Study Identification
+               ]
+
+# del dicom_object[(xxxx, yyyy)] doesn't work for me, but del dicom_object[tag] does, where tag = dicom.tag.Tag((xxxx, yyyy))
+deident_tags = [ dicom.tag.Tag(tag) for tag in deident_tags ]
+
 def new_uid(old_uid):
     """create a new DICOM UID
 
@@ -54,10 +67,9 @@ try:
                 else:
                     if el is not None:
                         do.data_element(name).value = new_uid(el.value)
-# del do[0xgp, 0xel] not working for me
-#                del do.PerformingPhysiciansName
-#                tag = do.data_element('PerformingPhysiciansName').tag
-#                del do[tag]
+                    for tag in deident_tags:
+                        if tag in do:
+                            del do[tag]
             out_fname = '%s/%08d' % (tempdir, i)
             i += 1
             dicom.write_file(out_fname, do)
