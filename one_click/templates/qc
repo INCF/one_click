@@ -1,0 +1,12 @@
+{% if not scans %}
+no scans
+{% else %}
+scans
+{% endif %}
+
+{% for scan in scans %}
+    http://xnat.incf.org/qc/{{ project }}/{{ experiment }}/{{ scan }}
+{% endfor %}
+
+http://xnat.incf.org/xnat/app/action/DisplayItemAction/search_element/xnat%3AmrSessionData/search_field/xnat%3AmrSessionData.ID/search_value/{{ experiment }}/popup/false/project/{{ project }}
+
