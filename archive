@@ -48,21 +48,31 @@ insert_user_query = """INSERT INTO xdat_user (login,
                                CURRVAL('xdat_user_meta_data_meta_data_id_seq'), 
                                NEXTVAL('xdat_user_xdat_user_id_seq'))"""
 
+def handle_bad_session(session, reason):
+    one_click.report_error('bad session', 'bad session: %s, %s' % (reason, str(session.study_comments)))
+    session.delete()
+    one_click.remove_deleted()
+    return
+
 if len(sys.argv) == 1:
     print 'usage: %s <prearchive session url>' % progname
     sys.exit(0)
 
 session = one_click.Session(sys.argv[1])
 
+print 'got session %s' % str(session)
+
 try:
     (ident, user) = session.study_comments.split(':', 2)
 except ValueError:
-    print 'HANDLE: bad session "%s" (no incf)' % session.study_comments
-    sys.exit(1)
+    print 'bad session'
+    handle_bad_session(session, 'bad session')
+    sys.exit(0)
 
 if ident.strip().lower() != 'incf':
-    print 'HANDLE: bad ident'
-    sys.exit(1)
+    print 'bad ident'
+    handle_bad_session(session, 'bad ident')
+    sys.exit(0)
 
 user = user.strip()
 
@@ -71,18 +81,20 @@ interface = pyxnat.Interface(server=pyxnat_server,
                              password=pyxnat_pw)
 
 if user not in interface.manage.users():
+    print 'getting user %s in LDAP' % user
     filter = '(uid=%s)' % ldap.filter.escape_filter_chars(user)
     l = ldap.initialize(ldap.functions.get_option(ldap.OPT_URI))
     l.simple_bind_s()
     try:
         res = l.search_s('ou=people,dc=incf,dc=org', ldap.SCOPE_SUBTREE, filter)
         if not res:
-            print 'HANDLE: user not found at all'
-            sys.exit(1)
+            print 'user not found'
+            handle_bad_session(session, 'user not found')
+            sys.exit(0)
         if len(res) > 1:
-            print 'HANDLE: multiple LDAP users'
-            sys.exit(1)
-        print res
+            print 'multiple LDAP users'
+            handle_bad_session(session, 'multiple LDAP users')
+            sys.exit(0)
     finally:
         l.unbind()
     (dn, user_dict) = res[0]
@@ -107,23 +119,30 @@ if user not in interface.manage.users():
     print 'user %s created in XNAT' % user
 
 project_name = 'u_%s' % user
-user = 'queued'
 project = interface.select('/projects/%s' % project_name)
 if not project.exists():
+    print 'creating project %s' % project_name
     project.create()
     project.add_user('xnat', role='owner')
     project.set_accessibility(accessibility='private')
     project.remove_user(pyxnat_user)
     print 'created project %s' % project_name
 
-print 'HANDLE: not deidentified'
-
-#sys.exit(2)
+print 'checking deidentification'
+tags = session.check_deidentification()
+print tags
+if tags:
+    print 'HANDLE: not deidentified'
+    email = interface.manage.users.email(user)
+    template = one_click.template_env.get_template('deident')
+    body = template.render(tags=tags, tag_dict=one_click.deident_tags)
+    one_click.send_mail([email], 'not deidentified', body)
+    session.delete()
+    one_click.remove_deleted()
+    sys.exit(0)
 
 print 'moving session %s' % str(session)
 session.move(project_name)
-
-print 'HANDLE: session exists'
 
 print 'archiving session %s' % str(session)
 session.archive()
