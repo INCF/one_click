@@ -27,7 +27,7 @@ if [ -f $py ]
 then
     /home/ch/arc-queue/arc-qadd $pipeline_home/bin/XnatPythonLauncher "$@" || exit 1
 else
-    /home/ch/arc-queue/arc-qadd $pipeline_home/bin/XnatPipelineLauncher.orig "$@" || exit 1
+    /home/ch/arc-queue/arc-qadd $pipeline_home/bin/XnatPipelineLauncher.orig `echo "$@" | sed 's/\-notify [^ ]* //g'` || exit 1
     if [ $xml = xnat_tools/AutoRun.xml ]
     then
         # qc pipeline goes here
