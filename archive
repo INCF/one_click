@@ -7,8 +7,6 @@ import ldap.filter
 import pyxnat
 import one_click
 
-devel = True
-
 progname = os.path.basename(sys.argv[0])
 
 pyxnat_server = 'http://xnat.incf.org/xnat/'
