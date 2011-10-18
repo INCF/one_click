@@ -259,7 +259,7 @@ class Session:
 
     def archive(self):
         """archive a session"""
-        body = urllib.urlencode({'src': self.url, 'overwrite': 'delete'})
+        body = urllib.urlencode({'src': self.url})
         request('POST', '/data/services/archive', body)
         return
 
