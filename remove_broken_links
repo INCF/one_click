@@ -1,0 +1,19 @@
+#!/bin/sh
+
+progname=`basename $0`
+
+if [ $# -ne 1 ]
+then
+    echo "usage: $progname <base direectory>"
+    echo "removes broken links under the given directory"
+    exit 1
+fi
+
+find "$1" -type l -print | while read link
+do
+    if [ ! -e $link ] ; then rm -v $link ; fi
+done
+
+exit 0
+
+# eof
