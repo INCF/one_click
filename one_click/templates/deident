@@ -1,0 +1,3 @@
+{% for tag in tags %}
+    ({{ '%04x, %04x' % tag }}): {{ tag_dict[tag] }}
+{% endfor %}
