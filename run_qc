@@ -10,9 +10,6 @@ import traceback
 import pyxnat
 
 def run_qc(scan, dicom_catalog, tempdir):
-    if scan.id() != '1201':
-        raise ValueError
-    return
     catalog_doc = xml.dom.minidom.parse(dicom_catalog)
     dicom_dir = os.path.dirname(dicom_catalog)
     dicom_files = []
@@ -60,9 +57,6 @@ interface = pyxnat.Interface(server=pyxnat_server,
                              password=pyxnat_pw)
 
 project = interface.select.project(project_id)
-if not project.exists():
-    print 'HANDLE'
-    sys.exit(1)
 
 experiment = None
 for s in project.subjects():
@@ -70,10 +64,7 @@ for s in project.subjects():
     if experiments:
         experiment = experiments[0]
 
-if not experiment:
-    print 'HANDLE'
-    sys.exit(1)
-
+qc_urls = []
 for scan in experiment.scans():
     print scan
     doc = xml.dom.minidom.parseString(scan.get())
@@ -93,9 +84,8 @@ for scan in experiment.scans():
         print
         continue
     else:
-        print 'else'
+        pass
     finally:
-        print 'finally'
         shutil.rmtree(tempdir)
     doc = xml.dom.minidom.parseString(scan.get())
     qc_catalog = None
@@ -104,9 +94,15 @@ for scan in experiment.scans():
             qc_catalog = el.getAttribute('URI')
             break
     qc_web_path = mk_qc_dir(project_id, experiment_id)
-    print '%s -> %s' % (os.path.dirname(qc_catalog), 
-                        '%s/%s' % (qc_web_path, scan.id()))
-    os.symlink(os.path.dirname(qc_catalog), '%s/%s' % (qc_web_path, scan.id()))
+    qc_dir = os.path.dirname(qc_catalog)
+    qc_link = '%s/%s' % (qc_web_path, scan.id())
+    print '%s -> %s' % (qc_dir, qc_link)
+    os.symlink(qc_dir, qc_link)
+    qc_urls.append(qc_link)
+
+print qc_urls
+
+print 'HANDLE SUCCESS'
 
 sys.exit(0)
 
