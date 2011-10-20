@@ -121,11 +121,11 @@ for scan in experiment.scans():
 
 email = interface.manage.users.email(user)
 
-template = one_click.template_env.get_template('qc')
+template = one_click.template_env.get_template('done.email')
 body = template.render(project=project_id, 
                        experiment=experiment_id, 
                        scans=complete_scans)
-one_click.send_mail([email], 'QC report', body)
+one_click.send_mail([email], 'QC report from xnat.incf.org', body)
 
 sys.exit(0)
 
