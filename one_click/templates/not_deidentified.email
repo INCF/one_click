@@ -1,3 +1,7 @@
+Thanks for uploading data for {{ session.subject }} to xnat.incf.org.  Unfortunately, the data contained DICOM tags that must be removed to be considered deidentified and has been removed from the site.  The tags in question are:
+
 {% for tag in tags %}
     ({{ '%04x, %04x' % tag }}): {{ tag_dict[tag] }}
 {% endfor %}
+
+Please see http://xnat.incf.org/ for more information and e-mail xnat-admin@incf.org with any questions.

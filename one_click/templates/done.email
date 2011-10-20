@@ -1,12 +1,13 @@
+Thanks for updloading data to xnat.incf.org, which is available at http://xnat.incf.org/xnat/REST/projects/{{ project }}.
+
 {% if not scans %}
-no scans
+Unfortunately the quality control we tried to run failed on all scans.  This is probably becuase no scans had more than one time point.
 {% else %}
-scans
+Quality control results for one or more scans can be found here:
+
+    {% for scan in scans %}
+    Scan {{ scan }}: http://xnat.incf.org/qc/{{ project }}/{{ experiment }}/{{ scan }}
+    {% endfor %}
 {% endif %}
 
-{% for scan in scans %}
-    http://xnat.incf.org/qc/{{ project }}/{{ experiment }}/{{ scan }}
-{% endfor %}
-
-http://xnat.incf.org/xnat/app/action/DisplayItemAction/search_element/xnat%3AmrSessionData/search_field/xnat%3AmrSessionData.ID/search_value/{{ experiment }}/popup/false/project/{{ project }}
-
+Please see http://xnat.incf.org/ for more information and e-mail xnat-admin@incf.org with any questions.
