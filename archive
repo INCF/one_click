@@ -46,8 +46,8 @@ insert_user_query = """INSERT INTO xdat_user (login,
                                CURRVAL('xdat_user_meta_data_meta_data_id_seq'), 
                                NEXTVAL('xdat_user_xdat_user_id_seq'))"""
 
-def handle_bad_session(session, reason):
-    one_click.report_error('bad session', 'bad session: %s, %s' % (reason, str(session.study_comments)))
+def handle_bad_study_comments(session, reason):
+    one_click.report_error('bad session', 'bad study comments (%s): %s' % (reason, str(session.study_comments)))
     session.delete()
     one_click.remove_deleted()
     return
@@ -60,16 +60,21 @@ session = one_click.Session(sys.argv[1])
 
 print 'got session %s' % str(session)
 
+if session.study_comments is None:
+    print 'no study comments'
+    handle_bad_study_comments(session, 'no study comments')
+    sys.exit(0)
+
 try:
     (ident, user) = session.study_comments.split(':', 2)
 except ValueError:
-    print 'bad session'
-    handle_bad_session(session, 'bad session')
+    print 'bad study comments'
+    handle_bad_study_comments(session, 'bad session')
     sys.exit(0)
 
 if ident.strip().lower() != 'incf':
     print 'bad ident'
-    handle_bad_session(session, 'bad ident')
+    handle_bad_study_comments(session, 'bad ident')
     sys.exit(0)
 
 user = user.strip()
@@ -87,11 +92,11 @@ if user not in interface.manage.users():
         res = l.search_s('ou=people,dc=incf,dc=org', ldap.SCOPE_SUBTREE, filter)
         if not res:
             print 'user not found'
-            handle_bad_session(session, 'user not found')
+            handle_bad_study_comments(session, 'user not found')
             sys.exit(0)
         if len(res) > 1:
             print 'multiple LDAP users'
-            handle_bad_session(session, 'multiple LDAP users')
+            handle_bad_study_comments(session, 'multiple LDAP users')
             sys.exit(0)
     finally:
         l.unbind()
@@ -132,9 +137,12 @@ print tags
 if tags:
     print 'HANDLE: not deidentified'
     email = interface.manage.users.email(user)
-    template = one_click.template_env.get_template('deident')
-    body = template.render(tags=tags, tag_dict=one_click.deident_tags)
-    one_click.send_mail([email], 'not deidentified', body)
+    template = one_click.template_env.get_template('not_deidentified.email')
+    body = template.render(session=session, 
+                           tags=tags, 
+                           tag_dict=one_click.deident_tags)
+    subject = 'Error in data for %s sent to xnat.incf.org' % session.subject
+    one_click.send_mail([email], subject, body)
     session.delete()
     one_click.remove_deleted()
     sys.exit(0)
