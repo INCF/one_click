@@ -349,6 +349,9 @@ public class LDAPAuthenticator extends Authenticator {
 			logger.debug("SEARCHBASE:" + SEARCHBASE);
 			logger.debug("FILTER:" + searchFilter);
 			logger.debug("searchCtls:" + searchCtls.toString());
+			for(String s:returnedAtts){
+				logger.debug("returnedAtts:" + s);
+			}
 			// Search for objects using the filter
 			NamingEnumeration answer = ctx.search(SEARCHBASE, searchFilter,
 					searchCtls);
@@ -389,7 +392,7 @@ public class LDAPAuthenticator extends Authenticator {
 		}
 
 		if (dns.size() == 1) {
-			return dns.get(0);
+			return "uid=" + dns.get(0) + ",ou=People,dc=incf,dc=org";
 		} else if (dns.size() == 0) {
 			logger.info(cred.getUsername() + ":No DN Found for "
 					+ cred.getUsername() + " Account");
@@ -545,6 +548,8 @@ public class LDAPAuthenticator extends Authenticator {
 					throw new XDATUser.FailedLoginException("Unknown user account.", cred.getUsername());
 				}
 
+				u.setProperty("login", cred.getUsername().toLowerCase());
+
 				u.setProperty("enabled", "true");
 
 				u.setProperty(
@@ -556,6 +561,12 @@ public class LDAPAuthenticator extends Authenticator {
 			}
 
 			if (u != null) {
+
+					// ch addition for INCF -- save user in the XNAT DB even if the login fails
+					if(u.getXdatUserId()==null){
+						u.save(null, true, false, true, false);
+					}
+
 				if (authenticate(u, cred)){
 					if(u.getXdatUserId()==null){
 
