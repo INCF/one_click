@@ -73,7 +73,9 @@ def send_mail(to_addrs, subject, body):
     return
 
 def _get_session_dict(*args):
-    """return a dictionary of session information given a url or a project, timestamp, and name"""
+    """return a dictionary of session information given a url or a project, 
+    timestamp, and name
+    """
     if len(args) == 1:
         url = '/data%s?format=json' % args[0]
     elif len(args) == 3:
@@ -181,15 +183,18 @@ class Session:
             elif isinstance(args[0], basestring):
                 d = _get_session_dict(args[0])
             else:
-                raise TypeError, 'Session expects a dictionary, one string, or three strings'
+                raise TypeError, 'Session expects a dictionary, ' + \
+                                 'one string, or three strings'
         elif len(args) == 3:
             for arg in args:
                 if not isinstance(arg, basestring):
                     raise TypeError, \
-                          'Session expects a dictionary, one string, or three strings'
+                          'Session expects a dictionary, ' + \
+                          'one string, or three strings'
             d = _get_session_dict(args[0], args[1], args[2])
         else:
-            raise TypeError, 'Session expects a dictionary, one string, or three strings'
+            raise TypeError, 'Session expects a dictionary, ' + \
+                             'one string, or three strings'
         self._update_dict(d)
         return
 
@@ -276,7 +281,9 @@ class Session:
         return
 
     def check_deidentification(self):
-        """return a list of DICOM tags that should be removed for proper deidentification"""
+        """return a list of DICOM tags that should be removed for proper 
+        deidentification
+        """
         tags = set()
         for s in self.scans:
             for f in s.files:
