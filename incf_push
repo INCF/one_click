@@ -82,7 +82,7 @@ try:
     for (n_file, fname) in enumerate(files):
         print '%6d/%6d: %s' % (n_file, len(files), fname)
         try:
-            do = dicom.read_file(ffname)
+            do = dicom.read_file(fname)
         except:
             continue
         do.StudyComments = 'incf:%s' % user
@@ -106,6 +106,9 @@ try:
         i += 1
         dicom.write_file(out_fname, do)
         staged_files.append(out_fname)
+    if not staged_files:
+        sys.stderr.write('%s: no DICOM files found\n' % progname)
+        sys.exit(1)
     args = ['storescu', '-v', '-aec', 'XNAT', 'xnat.incf.org', '104']
     args.extend(staged_files)
     subprocess.call(args)
