@@ -18,14 +18,27 @@ mail_host = 'luna.incf.ki.se'
 admin_email = 'xnat-admin@incf.org'
 deleted_dir = '/data/cache/DELETED'
 
-deident_tags = {(0x0008, 0x0090): "Referring Physician's Name", 
+deident_tags = {(0x0008, 0x0050): "Accession Number", 
+                (0x0008, 0x0080): "InstitutionName", 
+                (0x0008, 0x0090): "Referring Physician's Name", 
                 (0x0008, 0x0096): "Referring Physician Identification", 
                 (0x0008, 0x1048): "Physician(s) of Record", 
                 (0x0008, 0x1049): "Physician(s) of Record Identification", 
                 (0x0008, 0x1050): "Performing Physicians' Name", 
                 (0x0008, 0x1052): "Performing Physician Identification", 
                 (0x0008, 0x1060): "Name of Physician(s) Reading Study", 
-                (0x0008, 0x1062): "Physician(s) Reading Study Identification"}
+                (0x0008, 0x1062): "Physician(s) Reading Study Identification", 
+                (0x0010, 0x0030): "Patient's Birth Date", 
+                (0x0010, 0x0050): "Patient's Insurance Plan Code", 
+                (0x0010, 0x0101): "Patient's Primary Language Code", 
+                (0x0010, 0x1000): "Other Patient IDs", 
+                (0x0010, 0x1001): "Other Patient Names", 
+                (0x0010, 0x1002): "Other Patient IDs", 
+                (0x0010, 0x1005): "Patient's Birth Name", 
+                (0x0010, 0x1010): "Patient's Age", 
+                (0x0010, 0x1040): "Patient's Address", 
+                (0x0010, 0x1060): "Patient's Mother's Birth Name"}
+
 
 class PrearchiveError(Exception):
     "base class for prearchive exceptions"
