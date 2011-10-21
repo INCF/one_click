@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# See file COPYING distributed with the xnnppx package for the copyright 
-# and license.
+# from the xnnppx package (https://github.com/INCF/xnnppx); see XNNPPX_LICENSE 
+# for copyright and license
 
 pipeline_home=/home/ch/xnat/pipeline
 
