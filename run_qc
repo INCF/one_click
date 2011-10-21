@@ -25,7 +25,10 @@ def run_qc(scan, dicom_catalog, tempdir):
     res.attrs.mset({'format': 'XCEDE'})
     res.file(os.path.basename(xcede_fname)).put(xcede_fname)
     output_dir = '%s/%s' % (tempdir, scan.id())
-    args = ['/usr/local/bin/fmriqa_generate.pl', '--verbose', xcede_fname, output_dir]
+    args = ['/usr/local/bin/fmriqa_generate.pl', 
+            '--verbose', 
+            xcede_fname, 
+            output_dir]
     print subprocess.check_call(args)
     res = scan.resource('QC')
     for fname in os.listdir(output_dir):
@@ -54,7 +57,9 @@ if len(sys.argv) != 3:
 (project_id, experiment_id) = sys.argv[1:]
 
 if not project_id.startswith('u_'):
-    sys.stderr.write('%s: project must be a user project (starting with "u_")\n' % progname)
+    msg = '%s: project must be a user project (starting with "u_")\n' % \
+          progname)
+    sys.stderr.write(msg)
     sys.exit(1)
 user = project_id[2:]
 
@@ -74,7 +79,8 @@ for s in project.subjects():
         experiment = experiments[0]
 
 if not experiment:
-    sys.stderr.write("%s: can't find experiment %s in project %s\n" % (progname, project_id, experiment_id))
+    sys.stderr.write("%s: can't find experiment %s in project %s\n" % \
+                     (progname, project_id, experiment_id))
     sys.exit(1)
 
 experiment = None

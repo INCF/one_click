@@ -47,7 +47,8 @@ insert_user_query = """INSERT INTO xdat_user (login,
                                NEXTVAL('xdat_user_xdat_user_id_seq'))"""
 
 def handle_bad_study_comments(session, reason):
-    one_click.report_error('bad session', 'bad study comments (%s): %s' % (reason, str(session.study_comments)))
+    msg = 'bad study comments (%s): %s' % (reason, str(session.study_comments))
+    one_click.report_error('bad session', msg)
     session.delete()
     one_click.remove_deleted()
     return
