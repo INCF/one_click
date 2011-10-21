@@ -34,7 +34,25 @@ progname = os.path.basename(sys.argv[0])
 uids = {}
 
 if len(sys.argv) != 5:
-    print 'usage:%s dir user subject session' % progname
+    print
+    print 'Usage: %s <dir> <user> <subject> <session>' % progname
+    print
+    print 'Push data to the INCF XNAT server'
+    print
+    print 'dir -- Directory containing DICOM data.  This directory and its '
+    print '       subdirectories are recursively searched for data.'
+    print
+    print 'user -- Your INCF portal (www.incf.org) username.'
+    print
+    print 'subject -- The subject name as you would like it to appear on '
+    print '           the INCF XNAT.'
+    print
+    print 'session -- The session name as you would like it to appear on '
+    print '           the INCF XNAT.  This must be unique across all subjects '
+    print '           you send to the server.'
+    print
+    print 'For more information, please see http://xnat.incf.org/'
+    print
     sys.exit(1)
 
 (dir, user, subject, session) = sys.argv[1:]
@@ -43,38 +61,39 @@ staged_files = []
 
 tempdir = tempfile.mkdtemp()
 try:
-    i = 0
+    files = []
     for (dirpath, dirnames, filenames) in os.walk(dir):
         for fname in filenames:
-            ffname = '%s/%s' % (dirpath, fname)
-            print ffname
+            files.append('%s/%s' % (dirpath, fname))
+    i = 0
+    for (n_file, fname) in enumerate(files):
+        print '%6d/%6d: %s' % (n_file, len(files), fname)
+        try:
+            do = dicom.read_file(ffname)
+        except:
+            continue
+        do.StudyComments = 'incf:%s' % user
+        do.PatientsName = subject
+        do.PatientID = session
+        for name in ('SOPInstanceUID', 
+                     'StudyInstanceUID', 
+                     'SeriesInstanceUID', 
+                     'booyah', 
+                     'FrameofReferenceUID'):
             try:
-                do = dicom.read_file(ffname)
-            except:
-                continue
-            do.StudyComments = 'incf:%s' % user
-            do.PatientsName = subject
-            do.PatientID = session
-            for name in ('SOPInstanceUID', 
-                         'StudyInstanceUID', 
-                         'SeriesInstanceUID', 
-                         'booyah', 
-                         'FrameofReferenceUID'):
-                try:
-                    el = do.data_element(name)
-                except KeyError:
-                    pass
-                else:
-                    if el is not None:
-                        do.data_element(name).value = new_uid(el.value)
-                    for tag in deident_tags:
-                        if tag in do:
-                            del do[tag]
-            out_fname = '%s/%08d' % (tempdir, i)
-            i += 1
-            dicom.write_file(out_fname, do)
-            staged_files.append(out_fname)
-            print '    %s' % out_fname
+                el = do.data_element(name)
+            except KeyError:
+                pass
+            else:
+                if el is not None:
+                    do.data_element(name).value = new_uid(el.value)
+                for tag in deident_tags:
+                    if tag in do:
+                        del do[tag]
+        out_fname = '%s/%08d' % (tempdir, i)
+        i += 1
+        dicom.write_file(out_fname, do)
+        staged_files.append(out_fname)
     args = ['storescu', '-v', '-aec', 'XNAT', 'xnat.incf.org', '104']
     args.extend(staged_files)
     subprocess.call(args)
