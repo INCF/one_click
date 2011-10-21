@@ -23,7 +23,10 @@ $page.setBgColor($ui.bgcolor)
 		</tr>
 	#end
     <tr>
-    	<TH colspan="2"><font size="+1" style="line-height:20px;">New User Registration</font></TH>
+    	<TH colspan="2"><font size="+1" style="line-height:20px;">New User Registration</font>
+<br/>
+<A CLASS="text" style="font-weight:550;text-decoration:underline;" HREF="$link.setPage("Login.vm")">(Login)</A>
+</TH>
     </tr>
     <tr>
     	<TD colspan="2"><hr/></TD>
