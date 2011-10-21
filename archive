@@ -124,10 +124,9 @@ if user not in interface.manage.users():
 project_name = 'u_%s' % user
 project = interface.select('/projects/%s' % project_name)
 if not project.exists():
-    print 'creating project %s' % project_name
     project.create()
     project.add_user('xnat', role='owner')
-    project.set_accessibility(accessibility='private')
+    project.set_accessibility('public')
     project.remove_user(pyxnat_user)
     print 'created project %s' % project_name
 
