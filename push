@@ -90,7 +90,6 @@ try:
         for name in ('SOPInstanceUID', 
                      'StudyInstanceUID', 
                      'SeriesInstanceUID', 
-                     'booyah', 
                      'FrameofReferenceUID'):
             try:
                 el = do.data_element(name)

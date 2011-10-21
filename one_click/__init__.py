@@ -39,7 +39,6 @@ deident_tags = {(0x0008, 0x0050): "Accession Number",
                 (0x0010, 0x1040): "Patient's Address", 
                 (0x0010, 0x1060): "Patient's Mother's Birth Name"}
 
-
 class PrearchiveError(Exception):
     "base class for prearchive exceptions"
 
