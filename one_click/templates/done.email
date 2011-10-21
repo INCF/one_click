@@ -1,7 +1,7 @@
-Thanks for updloading data to xnat.incf.org, which is available at http://xnat.incf.org/xnat/REST/projects/{{ project }}.
+Thanks for uploading data to xnat.incf.org, which is available at http://xnat.incf.org/xnat/REST/projects/{{ project }}.
 
 {% if not scans %}
-Unfortunately the quality control we tried to run failed on all scans.  This is probably becuase no scans had more than one time point.
+Unfortunately the quality control we tried to run failed on all scans.  This is probably because no scans had more than one time point.
 {% else %}
 Quality control results for one or more scans can be found here:
 
