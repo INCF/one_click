@@ -1,6 +1,6 @@
 // one-click deidentification script
 
-- (0008,0050)		// Accession Number
+- (0008,0050)         // Accession Number
 - (0008,0050)         // Accession Number
 - (0008,0080)         // InstitutionName
 - (0008,0090)         // Referring Physician's Name
