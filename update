@@ -4,8 +4,9 @@ progname=`basename $0`
 
 # ps to a pipe may create a subprocess that is identified as this script, 
 # so we do this in two steps
+# ignoring 'sh -c', an artifact of cron
 running=`ps -ef`
-running=`echo "$running" | grep $progname | grep -v grep`
+running=`echo "$running" | grep $progname | grep -v grep | grep -v 'sh -c'`
 
 if [ `echo "$running" | wc -l` -gt 1 ]
 then
