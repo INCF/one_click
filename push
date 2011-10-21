@@ -30,7 +30,8 @@ deident_tags = [(0x0008, 0x0050), # Accession Number
                 (0x0010, 0x1060), # Patient's Mother's Birth Name
                ]
 
-# del dicom_object[(xxxx, yyyy)] doesn't work for me, but del dicom_object[tag] does, where tag = dicom.tag.Tag((xxxx, yyyy))
+# del dicom_object[(xxxx, yyyy)] doesn't work for me, but 
+# del dicom_object[tag] does, where tag = dicom.tag.Tag((xxxx, yyyy))
 deident_tags = [ dicom.tag.Tag(tag) for tag in deident_tags ]
 
 def new_uid(old_uid):
