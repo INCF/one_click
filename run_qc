@@ -17,7 +17,7 @@ def run_qc(scan, dicom_catalog, tempdir):
     for entry in catalog_doc.getElementsByTagName('cat:entry'):
         dicom_files.append(entry.getAttribute('URI'))
     xcede_fname = '%s/%s.xcede' % (tempdir, scan.id())
-    args = ['dicom2bxh', '--xcede']
+    args = ['/usr/local/bin/dicom2bxh', '--xcede']
     args.extend(dicom_files)
     args.append(xcede_fname)
     print subprocess.check_call(args, cwd=dicom_dir)
@@ -58,7 +58,7 @@ if len(sys.argv) != 3:
 
 if not project_id.startswith('u_'):
     msg = '%s: project must be a user project (starting with "u_")\n' % \
-          progname)
+          progname
     sys.stderr.write(msg)
     sys.exit(1)
 user = project_id[2:]
