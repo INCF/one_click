@@ -109,9 +109,13 @@ try:
     if not staged_files:
         sys.stderr.write('%s: no DICOM files found\n' % progname)
         sys.exit(1)
-    args = ['storescu', '-v', '-aec', 'XNAT', 'xnat.incf.org', '104']
-    args.extend(staged_files)
-    subprocess.call(args)
+    base_args = ['storescu', '-v', '-aec', 'XNAT', 'xnat.incf.org', '104']
+    while staged_files:
+        # make a copy
+        args = base_args[:]
+        args.extend(staged_files[:1000])
+        staged_files = staged_files[1000:]
+        subprocess.call(args)
 finally:
     shutil.rmtree(tempdir)
 
