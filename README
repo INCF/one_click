@@ -22,5 +22,5 @@ Contents:
 
     XNAT customizations:
 
-        xnat/ -- XNAT code
-        XnatPipelineLauncher -- xnnppx launcher (modified)
+        xnat/ -- XNAT code (modified)
+        XnatPipelineLauncher -- customized xnnppx launcher (modified)
