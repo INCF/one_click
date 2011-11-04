@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# See file COPYING distributed with the one_click package for the copyright
+# and license.
+
 progname=`basename $0`
 
 if [ $# -ne 1 ]

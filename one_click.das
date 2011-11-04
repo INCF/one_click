@@ -1,3 +1,6 @@
+// See file COPYING distributed with the one_click package for the copyright
+// and license.
+
 // one-click deidentification script
 
 - (0008,0050)         // Accession Number
