@@ -1,0 +1,155 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+<title>INCF XNAT Datashare</title>
+<link rel="stylesheet" type="text/css" href="index.css"/>
+</head>
+
+<body>
+
+<div id="header">
+<img src="incf_logo.png" alt="INCF Logo"/>
+<h1>INCF XNAT Data Store</h1>
+</div>
+
+
+<div id="body">
+
+<div id="leftnav">
+<ul>
+    <li class="first"><a href="/xnat/">Go to the database</a></li>
+    <li>Downloads
+        <ul>
+            <li><a href="incf_push">incf_push</a></li>
+            <li><a href="http://code.google.com/p/pydicom/">pydicom</a></li>
+            <li><a href="http://dicom.offis.de/dcmtk">DCMTK</a></li>
+            <li><a href="http://nrg.wustl.edu/software/dicom-browser/">DICOM Browser</a></li>
+            <li><a href="one_click.das">Anonymization script</a></li>
+        </ul>
+    </li>
+    <li>Contact
+        <ul><li><a href="mailto:xnat-admin@incf.org">xnat-admin@incf.org</a></li></ul>
+    </li>
+</ul>
+
+</div>
+
+<div id="main">
+
+<p>
+This is the <a href="http://xnat.incf.org/xnat/">INCF XNAT database</a>, a production of the <a href="http://datasharing.incf.org/ni/Main_Page">INCF Neuroimaging Datasharing Task Force</a>.</p>
+
+<h2>So what's this all about?</h2>
+
+<p>
+This instance of XNAT has been modified to run quality assessment tools on uploaded data.  Anyone can upload data, and the QA results will be mailed to you.  The data is then available to others, and may meet data sharing requirements.
+</p>
+
+<h2>That sounds great!  How do I do it?</h2>
+
+<p>
+First <a href="http://www.incf.org/register">create an account</a> for yourself on <a href="http://www.incf.org/">the INCF portal</a>.  Modify your DICOM data so the Study Comments attribute (0032, 4000) reads "incf:<em>yourportalusername</em>," the Patient Name attribute (0010, 0010) contains the name of the subject as you want it to appear on the database, and the Patient ID attribute (0010, 0020) contains the session name.  You'll also have to remove the identifiable attributes listed below.
+</p>
+
+<p>
+Then push DICOM data to the server at xnat.incf.org, port 104, with the called AE title "XNAT."
+</p>
+
+<h2>That sounds hard.</h2>
+
+<p>
+Let's make it easier.
+</p>
+
+<p>
+You'll still need <a href="http://www.incf.org/register">an account</a> on <a href="http://www.incf.org/">the INCF portal</a>.
+</p>
+
+<p>
+You can use a script to do most of the work for you.  Download our <a href="incf_push">script</a> (which requires <a href="http://code.google.com/p/pydicom/">pydicom</a> and <a href="http://dicom.offis.de/dcmtk">DCMTK</a>), and with one quick command line call, everything is done for you.  Run incf_push with no arguments for usage.
+</p>
+
+<p>
+Or you can use a tool like <a href="http://nrg.wustl.edu/software/dicom-browser/">DICOM Browser</a>.  Open your data in DICOM Browser, then:
+</p>
+
+<ul>
+<li>Apply <a href="one_click.das">the one-click anonymization script</a>.</li>
+<li>Change:
+    <ul>
+        <li class="first">(0032, 4000) to "incf:<em>yourportalusername</em>" (Study Comments)</li>
+        <li>(0010, 0010) to the name of the subject as you want it to appear in the database (Patient Name)</li>
+        <li>(0010, 0020) to the name of the session as you want it to appear in the database (Patient ID)</li>
+    </ul>
+</li>
+<li>Then send the using the following parameters (you can pick your own local AE title):
+    <ul>
+        <li class="first">Remote host: xnat.incf.org</li>
+        <li>Port: 104</li>
+        <li>Remote AE Title: XNAT</li>
+    </ul>
+</li>
+</ul>
+
+<h2>That <em>was</em> easy.  Now what?</h2>
+
+<p>
+The server will process your data and send you the results.  If you made a mistake in the study comments ("incf:<em>yourportalusername</em>"), we'll have no way of knowing the data came from you and can't contact you.  Otherwise, expect an e-mail in about an hour containing the <a href="http://www.nitrc.org/projects/bxh_xcede_tools/">BIRN QA</a> results on any time series data you sent.
+</p>
+
+<p>
+If your data is not sufficiently deidentified, it will be removed from the server and you will be notified.
+</p>
+
+<h2>And then anyone can download my data?</h2>
+
+<p>
+Yup.
+</p>
+
+<h2>What if I want to remove it?</h2>
+
+<p>
+You have complete control of your data.  Log in to the database with your portal credentials and you can hide or delete the data you have uploaded.
+</p>
+
+<h2>What are the DICOM attributes that need to be removed?</h2>
+
+<table>
+    <tr><td>(0008, 0050)</td><td>Accession Number</td></tr>
+    <tr><td>(0008, 0080)</td><td>InstitutionName</td></tr>
+    <tr><td>(0008, 0090)</td><td>Referring Physician's Name</td></tr>
+    <tr><td>(0008, 0096)</td><td>Referring Physician Identification</td></tr>
+    <tr><td>(0008, 1048)</td><td>Physician(s) of Record</td></tr>
+    <tr><td>(0008, 1049)</td><td>Physician(s) of Record Identification</td></tr>
+    <tr><td>(0008, 1050)</td><td>Performing Physicians' Name</td></tr>
+    <tr><td>(0008, 1052)</td><td>Performing Physician Identification</td></tr>
+    <tr><td>(0008, 1060)</td><td>Name of Physician(s) Reading Study</td></tr>
+    <tr><td>(0008, 1062)</td><td>Physician(s) Reading Study Identification</td></tr>
+    <tr><td>(0010, 0030)</td><td>Patient's Birth Date</td></tr>
+    <tr><td>(0010, 0050)</td><td>Patient's Insurance Plan Code</td></tr>
+    <tr><td>(0010, 0101)</td><td>Patient's Primary Language Code</td></tr>
+    <tr><td>(0010, 1000)</td><td>Other Patient IDs</td></tr>
+    <tr><td>(0010, 1001)</td><td>Other Patient Names</td></tr>
+    <tr><td>(0010, 1002)</td><td>Other Patient IDs</td></tr>
+    <tr><td>(0010, 1005)</td><td>Patient's Birth Name</td></tr>
+    <tr><td>(0010, 1010)</td><td>Patient's Age</td></tr>
+    <tr><td>(0010, 1040)</td><td>Patient's Address</td></tr>
+    <tr><td>(0010, 1060)</td><td>Patient's Mother's Birth Name</td></tr>
+</table>
+
+<h2>I have a question/comment/suggestion.</h2>
+
+<p>
+Great!  Please contact <a href="mailto:xnat-admin@incf.org">xnat-admin@incf.org</a>
+</p>
+
+</div>
+
+</div>
+
+</body>
+
+</html> 
