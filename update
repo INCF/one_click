@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# See file COPYING distributed with the one_click package for the copyright
+# and license.
+
 progname=`basename $0`
 
 # ps to a pipe may create a subprocess that is identified as this script, 

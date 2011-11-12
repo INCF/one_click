@@ -1,5 +1,8 @@
 #!/usr/bin/python
 
+# See file COPYING distributed with the one_click package for the copyright
+# and license.
+
 import sys
 import os
 import tempfile

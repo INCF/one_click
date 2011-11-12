@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# from the xnnppx package (https://github.com/INCF/xnnppx); see XNNPPX_LICENSE 
+# from the xnnppx package (https://github.com/INCF/xnnppx); see COPYING 
 # for copyright and license
 
 pipeline_home=/home/ch/xnat/pipeline
