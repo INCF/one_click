@@ -1,0 +1,20 @@
+Source: incf-one-click
+Section: science
+Priority: extra
+Maintainer: Christian Haselgrove <christian.haselgrove@umassmed.edu>
+Build-Depends: debhelper (>= 7.0.50~)
+Standards-Version: 3.9.2
+Homepage: http://xnat.incf.org/
+Vcs-Git: https://github.com/INCF/one_click.git
+Vcs-Browser: https://github.com/INCF/one_click
+
+Package: incf-one-click-clients
+Architecture: all
+Depends: python (>=2.5.0), 
+         python-dicom, 
+         dcmtk,
+         ${misc:Depends}
+Description: utility for pushing DICOM data to the INCF datasharing server
+ A command line utility for anonymizing and sending DICOM data to the XNAT 
+ image database at the International Neuroinformatics Coordinating Facility
+ (INCF).
