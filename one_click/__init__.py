@@ -17,7 +17,7 @@ import dicom
 
 auth = open('/home/ch/.xnat_pw').read().strip().encode('base64').strip()
 host = 'xnat.incf.org'
-mail_host = 'luna.incf.ki.se'
+mail_host = 'smtp.incf.org'
 admin_email = 'xnat-admin@incf.org'
 deleted_dir = '/data/cache/DELETED'
 
