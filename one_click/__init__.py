@@ -111,11 +111,8 @@ class _Entry:
     def __str__(self):
         return '<prearchive entry %s>' % self.uri
 
-    def __getattr__(self, name):
-        if name == 'dicom':
-            self.dicom = dicom.read_file(self.path, stop_before_pixels=True)
-            return self.dicom
-        raise AttributeError, "_Entry instance has no attribute '%s'" % name
+    def read_dicom(self):
+        return dicom.read_file(self.path)
 
 class _File:
 
@@ -233,7 +230,7 @@ class Session:
                     continue
                 for entry in f.entries:
                     try:
-                        val = entry.dicom.StudyComments
+                        val = entry.read_dicom().StudyComments
                     except:
                         pass
                     else:
@@ -293,8 +290,9 @@ class Session:
                 if f.format != 'DICOM':
                     continue
                 for entry in f.entries:
+                    do = entry.read_dicom()
                     for tag in deident_tags:
-                        if tag in entry.dicom:
+                        if tag in do:
                             tags.add(tag)
         tags = list(tags)
         tags.sort()
