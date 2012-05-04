@@ -49,6 +49,15 @@ def new_uid(old_uid):
 progname = os.path.basename(sys.argv[0])
 uids = {}
 
+try:
+    subprocess.call(['storescu'], 
+                    stdout=subprocess.PIPE, 
+                    stderr=subprocess.PIPE)
+except:
+    have_storescu = False
+else:
+    have_storescu = True
+
 if len(sys.argv) != 5:
     print
     print 'Usage: %s <dir> <user> <subject> <session>' % progname
@@ -69,6 +78,16 @@ if len(sys.argv) != 5:
     print
     print 'For more information, please see http://xnat.incf.org/'
     print
+    if not have_storescu:
+        print 'WARNING: storescu (the program used to send data to the server) '
+        print 'was not found on your system.  Please install DCMTK (or adjust '
+        print 'your path) before proceeding.'
+        print
+    sys.exit(1)
+
+if not have_storescu:
+    sys.stderr.write("%s: storescu not found in your path\n" % progname)
+    sys.stderr.write('please install DCMTK or adjust your path before proceeding\n')
     sys.exit(1)
 
 (dir, user, subject, session) = sys.argv[1:]
