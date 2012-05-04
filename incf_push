@@ -11,6 +11,11 @@ import subprocess
 import uuid
 import dicom
 
+class InvalidDicomError(Exception):
+    """Exception raised when read_dicom_file() tries to read a file that 
+    doesn't have DICM at byte 128.
+    """
+
 deident_tags = [(0x0008, 0x0050), # Accession Number
                 (0x0008, 0x0080), # InstitutionName
                 (0x0008, 0x0090), # Referring Physician's Name
@@ -38,13 +43,31 @@ deident_tags = [(0x0008, 0x0050), # Accession Number
 deident_tags = [ dicom.tag.Tag(tag) for tag in deident_tags ]
 
 def new_uid(old_uid):
-    """create a new DICOM UID
+    """Create a new DICOM UID.
 
-    return an already-created UID if the old UID has already been replaced
+    Return an already-created UID if the old UID has already been replaced.
     """
     if old_uid not in uids:
         uids[old_uid] = '2.25.%d' % uuid.uuid1().int
     return uids[old_uid]
+
+def read_dicom_file(fname):
+    """Read a DICOM file, raising an exception if the 'DICM' marker is not 
+    present at byte 128.
+
+    dicom.read_file() does this as of pydicom 0.9.5.
+    """
+    fo = open(fname)
+    try:
+        preamble = fo.read(128)
+        magic = fo.read(4)
+        if len(preamble) != 128 or magic != 'DICM':
+            raise InvalidDicomError
+        fo.seek(0)
+        do = dicom.read_file(fo)
+    finally:
+        fo.close()
+    return do
 
 progname = os.path.basename(sys.argv[0])
 uids = {}
@@ -104,7 +127,7 @@ try:
     for (n_file, fname) in enumerate(files):
         print '%6d/%6d: %s' % (n_file, len(files), fname)
         try:
-            do = dicom.read_file(fname)
+            do = read_dicom_file(fname)
         except:
             continue
         do.StudyComments = 'incf:%s' % user
@@ -131,6 +154,12 @@ try:
     if not staged_files:
         sys.stderr.write('%s: no DICOM files found\n' % progname)
         sys.exit(1)
+    print
+    if len(staged_files) == 1:
+        print 'sending 1 DICOM file'
+    else:
+        print 'sending %d DICOM files' % len(staged_files)
+    print
     base_args = ['storescu', '-v', '-aec', 'XNAT', 'xnat.incf.org', '104']
     while staged_files:
         # make a copy
