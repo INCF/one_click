@@ -1,0 +1,398 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2//EN">
+$page.setTitle("TimeSeriesQA Details")
+$page.setLinkColor($ui.alink)
+$page.setVlinkColor($ui.vlink)
+#if ($turbineUtils.GetPassedParameter("popup", $data))
+    #set ($popup = $turbineUtils.GetPassedParameter("popup", data) )
+    #set ($popup = "false")
+#end
+
+#set ( $base_uri = $content.getURI("/REST") )
+#set ( $session_id = $!item.getStringProperty("incf:TimeSeriesQAData/imageSession_ID") )
+#set ( $assessment_id = $!item.getStringProperty("incf:TimeSeriesQAData/ID") )
+#set ( $resource_path = "$base_uri/experiments/$session_id/assessors/$assessment_id/out/files/HTML" )
+
+<TABLE width="100%">
+    <TR>
+        <TD>
+            <table width="100%">
+                <TR>
+                    <TD align="left" valign="middle">
+                        <font face="$ui.sansSerifFonts" size="3"><b>TimeSeriesQA Details</b></font>
+                    </TD>
+                </TR>
+            </TABLE>
+        </TD>
+    </TR>
+    <TR>
+        <TD>
+            <TABLE width="100%">
+                <TR>
+                    <TD valign="top">
+                        <TABLE>
+                            <TR><TD>imageSession_ID</TD><TD>$!item.getStringProperty("incf:TimeSeriesQAData/imageSession_ID")</TD></TR>
+                            <TR><TD>ID</TD><TD>$!item.getStringProperty("incf:TimeSeriesQAData/ID")</TD></TR>
+                            <TR><TD>project</TD><TD>$!item.getStringProperty("incf:TimeSeriesQAData/project")</TD></TR>
+                            <TR><TD>label</TD><TD>$!item.getStringProperty("incf:TimeSeriesQAData/label")</TD></TR>
+                            <TR><TD>source_scan</TD><TD>$!item.getStringProperty("incf:TimeSeriesQAData/source_scan")</TD></TR>
+                        </TABLE>
+                    </TD>
+                    <TD valign="top" align="right">
+                        #elementActionsBox($element $search_field $search_value $data.getSession().getAttribute("user") $item)
+                    </TD>
+                </TR>
+            </TABLE>
+        </TD>
+    </TR>
+    <TR>
+        <TD>
+<!-- BEGIN incf:TimeSeriesQAData -->
+            <TABLE>
+                <TR>
+                    <TD align="left" valign="top" rowspan="7">input</TD>
+                    <TD align="left" valign="top"># potentially clipped voxels</TD>
+                    <TD align="left" valign="top"></TD>
+                    <TD align="left" valign="top">$!item.getIntegerProperty("incf:TimeSeriesQAData/Input/PotentiallyClippedVoxels")</TD>
+                </TR>
+                <TR>
+                    <TD align="left" valign="top" rowspan="2"># vols with mean intensity abs. z-score > 3</TD>
+                    <TD align="left" valign="top">individual</TD>
+                    <TD align="left" valign="top">$!item.getIntegerProperty("incf:TimeSeriesQAData/Input/NVolsMeanIntensityAbsZ3/individual")</TD>
+                </TR>
+                <TR>
+                    <TD align="left" valign="top">rel. to grand mean</TD>
+                    <TD align="left" valign="top">$!item.getIntegerProperty("incf:TimeSeriesQAData/Input/NVolsMeanIntensityAbsZ3/rel_grand_mean")</TD>
+                </TR>
+                <TR>
+                    <TD align="left" valign="top" rowspan="2"># vols with mean intensity abs. z-score > 4</TD>
+                    <TD align="left" valign="top">individual</TD>
+                    <TD align="left" valign="top">$!item.getIntegerProperty("incf:TimeSeriesQAData/Input/NVolsMeanIntensityAbsZ4/individual")</TD>
+                </TR>
+                <TR>
+                    <TD align="left" valign="top">rel. to grand mean</TD>
+                    <TD align="left" valign="top">$!item.getIntegerProperty("incf:TimeSeriesQAData/Input/NVolsMeanIntensityAbsZ4/rel_grand_mean")</TD>
+                </TR>
+                <TR>
+                    <TD align="left" valign="top"># vols with mean volume difference &gt; 1%</TD>
+                    <TD align="left" valign="top"></TD>
+                    <TD align="left" valign="top">$!item.getIntegerProperty("incf:TimeSeriesQAData/Input/NVolsMeanVolDifference1")</TD>
+                </TR>
+                <TR>
+                    <TD align="left" valign="top"># vols with mean volume difference &gt; 2%</TD>
+                    <TD align="left" valign="top"></TD>
+                    <TD align="left" valign="top">$!item.getIntegerProperty("incf:TimeSeriesQAData/Input/NVolsMeanVolDifference2")</TD>
+                </TR>
+                <TR>
+                    <TD align="left" valign="top" rowspan="3">masked</TD>
+                    <TD align="left" valign="top" rowspan="3">mean FWHM</TD>
+                    <TD align="left" valign="top">X</TD>
+                    <TD align="left" valign="top">$!item.getDoubleProperty("incf:TimeSeriesQAData/Masked/MeanFWHM/x")</TD>
+                </TR>
+                <TR>
+                    <TD align="left" valign="top">Y</TD>
+                    <TD align="left" valign="top">$!item.getDoubleProperty("incf:TimeSeriesQAData/Masked/MeanFWHM/y")</TD>
+                </TR>
+                <TR>
+                    <TD align="left" valign="top">Z</TD>
+                    <TD align="left" valign="top">$!item.getDoubleProperty("incf:TimeSeriesQAData/Masked/MeanFWHM/z")</TD>
+                </TR>
+                <TR>
+                    <TD align="left" valign="top" rowspan="7">masked, detrended</TD>
+                    <TD align="left" valign="top"># vols with running difference &gt; 1%</TD>
+                    <TD align="left" valign="top"></TD>
+                    <TD align="left" valign="top">$!item.getIntegerProperty("incf:TimeSeriesQAData/MaskedDetrended/NVolsRunningDifference1")</TD>
+                </TR>
+                <TR>
+                    <TD align="left" valign="top"># vols with running difference &gt; 2%</TD>
+                    <TD align="left" valign="top"></TD>
+                    <TD align="left" valign="top">$!item.getIntegerProperty("incf:TimeSeriesQAData/MaskedDetrended/NVolsRunningDifference2")</TD>
+                </TR>
+                <TR>
+                    <TD align="left" valign="top"># vols with &gt; 1% outlier voxels</TD>
+                    <TD align="left" valign="top"></TD>
+                    <TD align="left" valign="top">$!item.getIntegerProperty("incf:TimeSeriesQAData/MaskedDetrended/NVols1OutlierVoxels")</TD>
+                </TR>
+                <TR>
+                    <TD align="left" valign="top"># vols with &gt; 2% outlier voxels</TD>
+                    <TD align="left" valign="top"></TD>
+                    <TD align="left" valign="top">$!item.getIntegerProperty("incf:TimeSeriesQAData/MaskedDetrended/NVols2OutlierVoxels")</TD>
+                </TR>
+                <TR>
+                    <TD align="left" valign="top">mean (ROI in middle slice)</TD>
+                    <TD align="left" valign="top"></TD>
+                    <TD align="left" valign="top">$!item.getDoubleProperty("incf:TimeSeriesQAData/MaskedDetrended/MeanROIMiddleSlice")</TD>
+                </TR>
+                <TR>
+                    <TD align="left" valign="top">mean SNR (ROI in middle slice)</TD>
+                    <TD align="left" valign="top"></TD>
+                    <TD align="left" valign="top">$!item.getDoubleProperty("incf:TimeSeriesQAData/MaskedDetrended/MeanSNRROIMiddleSlice")</TD>
+                </TR>
+                <TR>
+                    <TD align="left" valign="top">mean SFNR (ROI in middle slice)</TD>
+                    <TD align="left" valign="top"></TD>
+                    <TD align="left" valign="top">$!item.getDoubleProperty("incf:TimeSeriesQAData/MaskedDetrended/MeanSFNRROIMiddleSlice")</TD>
+                </TR>
+            </TABLE>
+
+Mean intensity per volume (what's this?)
+            <TABLE>
+                <TR>
+                    <TD align="left" valign="top">absolute</TD>
+                    <TD align="left" valign="top">$!item.getDoubleProperty("incf:TimeSeriesQAData/Input/Means/absolute_mean")</TD>
+                </TR>
+                <TR>
+                    <TD align="left" valign="top">relative</TD>
+                    <TD align="left" valign="top">$!item.getDoubleProperty("incf:TimeSeriesQAData/Input/Means/relative_mean")</TD>
+                </TR>
+            </TABLE>
+
+<IMG SRC="$resource_path/qa_volmeans_allnorm.png" />
+<IMG SRC="$resource_path/qa_volmeans_all.png" />
+<IMG SRC="$resource_path/qa_volmeans_$!{item.getStringProperty("incf:TimeSeriesQAData/source_scan")}.xcede_histo.png" />
+
+Volume means (masked, detrended) (what's this?)
+            <TABLE>
+                <TR>
+                    <TD align="left" valign="top">absolute</TD>
+                    <TD align="left" valign="top">$!item.getDoubleProperty("incf:TimeSeriesQAData/MaskedDetrended/Means/absolute_mean")</TD>
+                </TR>
+                <TR>
+                    <TD align="left" valign="top">relative</TD>
+                    <TD align="left" valign="top">$!item.getDoubleProperty("incf:TimeSeriesQAData/MaskedDetrended/Means/relative_mean")</TD>
+                </TR>
+            </TABLE>
+
+<IMG SRC="$resource_path/qa_maskedvolmeans_allnorm.png" />
+<IMG SRC="$resource_path/qa_maskedvolmeans_all.png" />
+<IMG SRC="$resource_path/qa_maskedvolmeans_all_histo.png" />
+
+Means of mean volume difference (what's this?)
+            <TABLE>
+                <TR>
+                    <TD align="left" valign="top">absolute</TD>
+                    <TD align="left" valign="top">$!item.getDoubleProperty("incf:TimeSeriesQAData/Input/MeanMeanVolDiff/absolute_mean")</TD>
+                </TR>
+                <TR>
+                    <TD align="left" valign="top">relative</TD>
+                    <TD align="left" valign="top">$!item.getDoubleProperty("incf:TimeSeriesQAData/Input/MeanMeanVolDiff/relative_mean")</TD>
+                </TR>
+            </TABLE>
+
+<IMG SRC="$resource_path/qa_mdiffvolmeans_allnorm.png" />
+<IMG SRC="$resource_path/qa_mdiffvolmeans_all.png" />
+<IMG SRC="$resource_path/qa_mdiffvolmeans_all_histo.png" />
+
+Running difference ("velocity") volume means (masked, detrended) (what's this?)
+            <TABLE>
+                <TR>
+                    <TD align="left" valign="top">absolute</TD>
+                    <TD align="left" valign="top">$!item.getDoubleProperty("incf:TimeSeriesQAData/MaskedDetrended/RunningDifferenceMeans/absolute_mean")</TD>
+                </TR>
+                <TR>
+                    <TD align="left" valign="top">relative</TD>
+                    <TD align="left" valign="top">$!item.getDoubleProperty("incf:TimeSeriesQAData/MaskedDetrended/RunningDifferenceMeans/relative_mean")</TD>
+                </TR>
+            </TABLE>
+
+<IMG SRC="$resource_path/qa_maskedtdiffvolmeans_allnorm.png" />
+<IMG SRC="$resource_path/qa_maskedtdiffvolmeans_all.png" />
+<IMG SRC="$resource_path/qa_maskedtdiffvolmeans_all_histo.png" />
+
+Outlier voxel percentages (from AFNI's 3dToutcount) (masked, detrended) (what's this?)
+            <TABLE>
+                <TR>
+                    <TD align="left" valign="top">absolute</TD>
+                    <TD align="left" valign="top">$!item.getDoubleProperty("incf:TimeSeriesQAData/MaskedDetrended/OutlierVoxelPcts/absolute_mean")</TD>
+                </TR>
+                <TR>
+                    <TD align="left" valign="top">relative</TD>
+                    <TD align="left" valign="top">$!item.getDoubleProperty("incf:TimeSeriesQAData/MaskedDetrended/OutlierVoxelPcts/relative_mean")</TD>
+                </TR>
+            </TABLE>
+
+<IMG SRC="$resource_path/qa_outliercount_all.png" />
+<IMG SRC="$resource_path/qa_outliercount_all_histo.png" />
+
+FWHM in X dimension (from AFNI's 3dFWHMx) (masked) (what's this?)
+            <TABLE>
+                <TR>
+                    <TD align="left" valign="top">absolute</TD>
+                    <TD align="left" valign="top">$!item.getDoubleProperty("incf:TimeSeriesQAData/Masked/FWHMX/absolute_mean")</TD>
+                </TR>
+                <TR>
+                    <TD align="left" valign="top">relative</TD>
+                    <TD align="left" valign="top">$!item.getDoubleProperty("incf:TimeSeriesQAData/Masked/FWHMX/relative_mean")</TD>
+                </TR>
+            </TABLE>
+
+<IMG SRC="$resource_path/qa_FWHMx-X_all.png" />
+<IMG SRC="$resource_path/qa_FWHMx-X_all_histo.png" />
+
+FWHM in Y dimension (from AFNI's 3dFWHMx) (masked) (what's this?)
+            <TABLE>
+                <TR>
+                    <TD align="left" valign="top">absolute</TD>
+                    <TD align="left" valign="top">$!item.getDoubleProperty("incf:TimeSeriesQAData/Masked/FWHMY/absolute_mean")</TD>
+                </TR>
+                <TR>
+                    <TD align="left" valign="top">relative</TD>
+                    <TD align="left" valign="top">$!item.getDoubleProperty("incf:TimeSeriesQAData/Masked/FWHMY/relative_mean")</TD>
+                </TR>
+            </TABLE>
+
+<IMG SRC="$resource_path/qa_FWHMx-Y_all.png" />
+<IMG SRC="$resource_path/qa_FWHMx-Y_all_histo.png" />
+
+FWHM in Z dimension (from AFNI's 3dFWHMx) (masked) (what's this?)
+            <TABLE>
+                <TR>
+                    <TD align="left" valign="top">absolute</TD>
+                    <TD align="left" valign="top">$!item.getDoubleProperty("incf:TimeSeriesQAData/Masked/FWHMZ/absolute_mean")</TD>
+                </TR>
+                <TR>
+                    <TD align="left" valign="top">relative</TD>
+                    <TD align="left" valign="top">$!item.getDoubleProperty("incf:TimeSeriesQAData/Masked/FWHMZ/relative_mean")</TD>
+                </TR>
+            </TABLE>
+
+<IMG SRC="$resource_path/qa_FWHMx-Z_all.png" />
+<IMG SRC="$resource_path/qa_FWHMx-Z_all_histo.png" />
+
+Center of mass (X) (input) (what's this?)
+            <TABLE>
+                <TR>
+                    <TD align="left" valign="top">absolute</TD>
+                    <TD align="left" valign="top">$!item.getDoubleProperty("incf:TimeSeriesQAData/Input/CenterOfMassX/absolute_mean")</TD>
+                </TR>
+                <TR>
+                    <TD align="left" valign="top">relative</TD>
+                    <TD align="left" valign="top">$!item.getDoubleProperty("incf:TimeSeriesQAData/Input/CenterOfMassX/relative_mean")</TD>
+                </TR>
+            </TABLE>
+
+<IMG SRC="$resource_path/qa_cmassx_allnorm.png" />
+<IMG SRC="$resource_path/qa_cmassx_all.png" />
+<IMG SRC="$resource_path/qa_cmassx_all_histo.png" />
+
+Center of mass (X) (masked, detrended) (what's this?)
+            <TABLE>
+                <TR>
+                    <TD align="left" valign="top">absolute</TD>
+                    <TD align="left" valign="top">$!item.getDoubleProperty("incf:TimeSeriesQAData/MaskedDetrended/CenterOfMassX/absolute_mean")</TD>
+                </TR>
+                <TR>
+                    <TD align="left" valign="top">relative</TD>
+                    <TD align="left" valign="top">$!item.getDoubleProperty("incf:TimeSeriesQAData/MaskedDetrended/CenterOfMassX/relative_mean")</TD>
+                </TR>
+            </TABLE>
+
+<IMG SRC="$resource_path/qa_maskedcmassx_allnorm.png" />
+<IMG SRC="$resource_path/qa_maskedcmassx_all.png" />
+<IMG SRC="$resource_path/qa_maskedcmassx_all_histo.png" />
+
+Center of mass (Y) (input) (what's this?)
+            <TABLE>
+                <TR>
+                    <TD align="left" valign="top">absolute</TD>
+                    <TD align="left" valign="top">$!item.getDoubleProperty("incf:TimeSeriesQAData/Input/CenterOfMassY/absolute_mean")</TD>
+                </TR>
+                <TR>
+                    <TD align="left" valign="top">relative</TD>
+                    <TD align="left" valign="top">$!item.getDoubleProperty("incf:TimeSeriesQAData/Input/CenterOfMassY/relative_mean")</TD>
+                </TR>
+            </TABLE>
+
+<IMG SRC="$resource_path/qa_cmassy_allnorm.png" />
+<IMG SRC="$resource_path/qa_cmassy_all.png" />
+<IMG SRC="$resource_path/qa_cmassy_all_histo.png" />
+
+Center of mass (Y) (masked, detrended) (what's this?)
+            <TABLE>
+                <TR>
+                    <TD align="left" valign="top">absolute</TD>
+                    <TD align="left" valign="top">$!item.getDoubleProperty("incf:TimeSeriesQAData/MaskedDetrended/CenterOfMassY/absolute_mean")</TD>
+                </TR>
+                <TR>
+                    <TD align="left" valign="top">relative</TD>
+                    <TD align="left" valign="top">$!item.getDoubleProperty("incf:TimeSeriesQAData/MaskedDetrended/CenterOfMassY/relative_mean")</TD>
+                </TR>
+            </TABLE>
+
+<IMG SRC="$resource_path/qa_maskedcmassy_allnorm.png" />
+<IMG SRC="$resource_path/qa_maskedcmassy_all.png" />
+<IMG SRC="$resource_path/qa_maskedcmassy_all_histo.png" />
+
+Center of mass (Z) (input) (what's this?)
+            <TABLE>
+                <TR>
+                    <TD align="left" valign="top">absolute</TD>
+                    <TD align="left" valign="top">$!item.getDoubleProperty("incf:TimeSeriesQAData/Input/CenterOfMassZ/absolute_mean")</TD>
+                </TR>
+                <TR>
+                    <TD align="left" valign="top">relative</TD>
+                    <TD align="left" valign="top">$!item.getDoubleProperty("incf:TimeSeriesQAData/Input/CenterOfMassZ/relative_mean")</TD>
+                </TR>
+            </TABLE>
+
+<IMG SRC="$resource_path/qa_cmassz_allnorm.png" />
+<IMG SRC="$resource_path/qa_cmassz_all.png" />
+<IMG SRC="$resource_path/qa_cmassz_all_histo.png" />
+
+Center of mass (Z) (masked, detrended) (what's this?)
+            <TABLE>
+                <TR>
+                    <TD align="left" valign="top">absolute</TD>
+                    <TD align="left" valign="top">$!item.getDoubleProperty("incf:TimeSeriesQAData/MaskedDetrended/CenterOfMassZ/absolute_mean")</TD>
+                </TR>
+                <TR>
+                    <TD align="left" valign="top">relative</TD>
+                    <TD align="left" valign="top">$!item.getDoubleProperty("incf:TimeSeriesQAData/MaskedDetrended/CenterOfMassZ/relative_mean")</TD>
+                </TR>
+            </TABLE>
+
+<IMG SRC="$resource_path/qa_maskedcmassz_allnorm.png" />
+<IMG SRC="$resource_path/qa_maskedcmassz_all.png" />
+<IMG SRC="$resource_path/qa_maskedcmassz_all_histo.png" />
+
+
+
+
+
+
+
+
+
+
+Frequency spectrum (mean over mask) (masked, detrended) (what's this?)
+            <TABLE>
+                <TR>
+                    <TD align="left" valign="top">absolute</TD>
+                    <TD align="left" valign="top">$!item.getDoubleProperty("incf:TimeSeriesQAData/MaskedDetrended/FrequencySpectrumMeanOverMask/absolute_mean")</TD>
+                </TR>
+                <TR>
+                    <TD align="left" valign="top">relative</TD>
+                    <TD align="left" valign="top">$!item.getDoubleProperty("incf:TimeSeriesQAData/MaskedDetrended/FrequencySpectrumMeanOverMask/relative_mean")</TD>
+                </TR>
+            </TABLE>
+
+<IMG SRC="$resource_path/qa_spectrummean_all.png" />
+<IMG SRC="$resource_path/qa_spectrummean_all_histo.png" />
+
+Frequency spectrum (max over mask) (masked, detrended) (what's this?)
+            <TABLE>
+                <TR>
+                    <TD align="left" valign="top">absolute</TD>
+                    <TD align="left" valign="top">$!item.getDoubleProperty("incf:TimeSeriesQAData/MaskedDetrended/FrequencySpectrumMaxOverMask/absolute_mean")</TD>
+                </TR>
+                <TR>
+                    <TD align="left" valign="top">relative</TD>
+                    <TD align="left" valign="top">$!item.getDoubleProperty("incf:TimeSeriesQAData/MaskedDetrended/FrequencySpectrumMaxOverMask/relative_mean")</TD>
+                </TR>
+            </TABLE>
+
+<IMG SRC="$resource_path/qa_spectrummax_all.png" />
+<IMG SRC="$resource_path/qa_spectrummax_all_histo.png" />
+
+        </TD>
+    </TR>
+</TABLE><BR>#parse("/screens/ReportProjectSpecificFields.vm")

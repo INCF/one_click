@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema targetNamespace="http://xnat.incf.org/xnat" xmlns:incf="http://xnat.incf.org/xnat" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xnat="http://nrg.wustl.edu/xnat"> 
+    <xs:import namespace="http://nrg.wustl.edu/xnat" schemaLocation="../xnat/xnat.xsd"/>
+    <xs:element name="StructuralQA" type="incf:StructuralQAData"/>
+    <xs:complexType name="StructuralQAData">
+        <xs:complexContent>
+            <xs:extension base="xnat:mrAssessorData">
+                <xs:sequence>
+                    <xs:element name="StructuralQAStats" type="incf:StructuralQAStatsData" minOccurs="1" maxOccurs="unbounded"/>
+                </xs:sequence>
+                <xs:attribute name="source_scan" type="xs:string"/>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+    <xs:complexType name="StructuralQAStatsData">
+        <xs:all>
+            <xs:element name="RobustMinIntensity" type="xs:float"/>
+            <xs:element name="RobustMaxIntensity" type="xs:float"/>
+            <xs:element name="MinIntensity" type="xs:float"/>
+            <xs:element name="MaxIntensity" type="xs:float"/>
+            <xs:element name="MeanIntensity" type="xs:float"/>
+            <xs:element name="StdIntensit" type="xs:float"/>
+            <xs:element name="NVoxels" type="xs:float"/>
+            <xs:element name="Volume" type="xs:float"/>
+        </xs:all>
+        <xs:attribute name="region" type="xs:string"/>
+    </xs:complexType>
+</xs:schema>

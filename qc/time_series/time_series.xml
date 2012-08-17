@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<incf:TimeSeriesQA xmlns:incf="http://xnat.incf.org/xnat" xmlns:xnat="http://nrg.wustl.edu/xnat" ID="" source_scan="1101">
+    <xnat:imageSession_ID/>
+    <Input>
+        <PotentiallyClippedVoxels>0</PotentiallyClippedVoxels>
+        <NVolsMeanIntensityAbsZ3 individual="0" rel_grand_mean="0"/>
+        <NVolsMeanIntensityAbsZ4 individual="0" rel_grand_mean="0"/>
+        <NVolsMeanVolDifference1>18</NVolsMeanVolDifference1>
+        <NVolsMeanVolDifference2>0</NVolsMeanVolDifference2>
+        <Means absolute_mean="116.336" relative_mean="1"/>
+        <MeanMeanVolDiff absolute_mean="2.76795e-06" relative_mean="1"/>
+        <CenterOfMassX absolute_mean="125.239" relative_mean="1"/>
+        <CenterOfMassY absolute_mean="139.597" relative_mean="1"/>
+        <CenterOfMassZ absolute_mean="82.2015" relative_mean="1"/>
+    </Input>
+    <Masked>
+        <MeanFWHM x="4.157" y="3.449" z="4.409"/>
+        <FWHMX absolute_mean="4.15801" relative_mean="1"/>
+        <FWHMY absolute_mean="3.44725" relative_mean="1"/>
+        <FWHMZ absolute_mean="4.41051" relative_mean="1"/>
+    </Masked>
+    <MaskedDetrended>
+        <NVolsMeanIntensityAbsZ3 individual="1" rel_grand_mean="1"/>
+        <NVolsMeanIntensityAbsZ4 individual="1" rel_grand_mean="1"/>
+        <NVolsRunningDifference1>0</NVolsRunningDifference1>
+        <NVolsRunningDifference2>0</NVolsRunningDifference2>
+        <NVols1OutlierVoxels>3</NVols1OutlierVoxels>
+        <NVols2OutlierVoxels>3</NVols2OutlierVoxels>
+        <MeanROIMiddleSlice>767.9</MeanROIMiddleSlice>
+        <MeanSNRROIMiddleSlice>87.6</MeanSNRROIMiddleSlice>
+        <MeanSFNRROIMiddleSlice>62.9</MeanSFNRROIMiddleSlice>
+        <Means absolute_mean="742.391" relative_mean="1"/>
+        <RunningDifferenceMeans absolute_mean="0.000270113" relative_mean="1"/>
+        <OutlierVoxelPcts absolute_mean="0.227096" relative_mean="1"/>
+        <CenterOfMassX absolute_mean="124.947" relative_mean="1"/>
+        <CenterOfMassY absolute_mean="141.551" relative_mean="1"/>
+        <CenterOfMassZ absolute_mean="85.9057" relative_mean="1"/>
+        <FrequencySpectrumMeanOverMask absolute_mean="134.57" relative_mean="1"/>
+        <FrequencySpectrumMaxOverMask absolute_mean="4532.38" relative_mean="1"/>
+    </MaskedDetrended>
+</incf:TimeSeriesQA>

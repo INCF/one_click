@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema targetNamespace="http://xnat.incf.org/xnat" xmlns:incf="http://xnat.incf.org/xnat" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xnat="http://nrg.wustl.edu/xnat"> 
+    <xs:import namespace="http://nrg.wustl.edu/xnat" schemaLocation="../xnat/xnat.xsd"/>
+    <xs:element name="TimeSeriesQA" type="incf:TimeSeriesQAData"/>
+    <xs:complexType name="TimeSeriesQAData">
+        <xs:complexContent>
+            <xs:extension base="xnat:mrAssessorData">
+                <xs:sequence>
+                    <xs:element name="Input" type="incf:InputData"/>
+                    <xs:element name="Masked" type="incf:MaskedData"/>
+                    <xs:element name="MaskedDetrended" type="incf:MaskedDetrendedData"/>
+                </xs:sequence>
+                <xs:attribute name="source_scan"/>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+    <xs:complexType name="InputData">
+        <xs:sequence>
+            <xs:element name="PotentiallyClippedVoxels" type="xs:integer"/>
+            <xs:element name="NVolsMeanIntensityAbsZ3" type="incf:NVolsIndRelData"/>
+            <xs:element name="NVolsMeanIntensityAbsZ4" type="incf:NVolsIndRelData"/>
+            <xs:element name="NVolsMeanVolDifference1" type="xs:integer"/>
+            <xs:element name="NVolsMeanVolDifference2" type="xs:integer"/>
+            <xs:element name="Means" type="incf:TimeSeriesQAValuesData"/>
+            <xs:element name="MeanMeanVolDiff" type="incf:TimeSeriesQAValuesData"/>
+            <xs:element name="CenterOfMassX" type="incf:TimeSeriesQAValuesData"/>
+            <xs:element name="CenterOfMassY" type="incf:TimeSeriesQAValuesData"/>
+            <xs:element name="CenterOfMassZ" type="incf:TimeSeriesQAValuesData"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="MaskedData">
+        <xs:sequence>
+            <xs:element name="MeanFWHM" type="incf:MeanFWHMData"/>
+            <xs:element name="FWHMX" type="incf:TimeSeriesQAValuesData"/>
+            <xs:element name="FWHMY" type="incf:TimeSeriesQAValuesData"/>
+            <xs:element name="FWHMZ" type="incf:TimeSeriesQAValuesData"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="MaskedDetrendedData">
+        <xs:all>
+            <xs:element name="NVolsMeanIntensityAbsZ3" type="incf:NVolsIndRelData"/>
+            <xs:element name="NVolsMeanIntensityAbsZ4" type="incf:NVolsIndRelData"/>
+            <xs:element name="NVolsRunningDifference1" type="xs:integer"/>
+            <xs:element name="NVolsRunningDifference2" type="xs:integer"/>
+            <xs:element name="NVols1OutlierVoxels" type="xs:integer"/>
+            <xs:element name="NVols2OutlierVoxels" type="xs:integer"/>
+            <xs:element name="MeanROIMiddleSlice" type="xs:float"/>
+            <xs:element name="MeanSNRROIMiddleSlice" type="xs:float"/>
+            <xs:element name="MeanSFNRROIMiddleSlice" type="xs:float"/>
+            <xs:element name="Means" type="incf:TimeSeriesQAValuesData"/>
+            <xs:element name="RunningDifferenceMeans" type="incf:TimeSeriesQAValuesData"/>
+            <xs:element name="OutlierVoxelPcts" type="incf:TimeSeriesQAValuesData"/>
+            <xs:element name="CenterOfMassX" type="incf:TimeSeriesQAValuesData"/>
+            <xs:element name="CenterOfMassY" type="incf:TimeSeriesQAValuesData"/>
+            <xs:element name="CenterOfMassZ" type="incf:TimeSeriesQAValuesData"/>
+            <xs:element name="FrequencySpectrumMeanOverMask" type="incf:TimeSeriesQAValuesData"/>
+            <xs:element name="FrequencySpectrumMaxOverMask" type="incf:TimeSeriesQAValuesData"/>
+        </xs:all>
+    </xs:complexType>
+    <xs:complexType name="MeanFWHMData">
+        <xs:attribute name="x" type="xs:float"/>
+        <xs:attribute name="y" type="xs:float"/>
+        <xs:attribute name="z" type="xs:float"/>
+    </xs:complexType>
+    <xs:complexType name="NVolsIndRelData">
+        <xs:attribute name="individual" type="xs:integer"/>
+        <xs:attribute name="rel_grand_mean" type="xs:integer"/>
+    </xs:complexType>
+    <xs:complexType name="TimeSeriesQAValuesData">
+        <xs:attribute name="absolute_mean" type="xs:float"/>
+        <xs:attribute name="relative_mean" type="xs:float"/>
+    </xs:complexType>
+</xs:schema>
