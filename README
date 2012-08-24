@@ -27,3 +27,9 @@ Contents:
 
         xnat/ -- XNAT code (modified)
         XnatPipelineLauncher -- customized xnnppx launcher (modified)
+
+---
+new installation notes
+
+xnat/projects/xnat/conf/authentication.properties needs password
+
