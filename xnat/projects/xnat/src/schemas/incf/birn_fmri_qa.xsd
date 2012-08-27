@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema targetNamespace="http://xnat.incf.org/xnat" xmlns:incf="http://xnat.incf.org/xnat" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xnat="http://nrg.wustl.edu/xnat"> 
     <xs:import namespace="http://nrg.wustl.edu/xnat" schemaLocation="../xnat/xnat.xsd"/>
-    <xs:element name="TimeSeriesQA" type="incf:TimeSeriesQAData"/>
-    <xs:complexType name="TimeSeriesQAData">
+    <xs:element name="BIRNfMRIQA" type="incf:BIRNfMRIQAData"/>
+    <xs:complexType name="BIRNfMRIQAData">
         <xs:complexContent>
             <xs:extension base="xnat:mrAssessorData">
                 <xs:sequence>
@@ -21,19 +21,19 @@
             <xs:element name="NVolsMeanIntensityAbsZ4" type="incf:NVolsIndRelData"/>
             <xs:element name="NVolsMeanVolDifference1" type="xs:integer"/>
             <xs:element name="NVolsMeanVolDifference2" type="xs:integer"/>
-            <xs:element name="Means" type="incf:TimeSeriesQAValuesData"/>
-            <xs:element name="MeanMeanVolDiff" type="incf:TimeSeriesQAValuesData"/>
-            <xs:element name="CenterOfMassX" type="incf:TimeSeriesQAValuesData"/>
-            <xs:element name="CenterOfMassY" type="incf:TimeSeriesQAValuesData"/>
-            <xs:element name="CenterOfMassZ" type="incf:TimeSeriesQAValuesData"/>
+            <xs:element name="Means" type="incf:BIRNfMRIQAValuesData"/>
+            <xs:element name="MeanMeanVolDiff" type="incf:BIRNfMRIQAValuesData"/>
+            <xs:element name="CenterOfMassX" type="incf:BIRNfMRIQAValuesData"/>
+            <xs:element name="CenterOfMassY" type="incf:BIRNfMRIQAValuesData"/>
+            <xs:element name="CenterOfMassZ" type="incf:BIRNfMRIQAValuesData"/>
         </xs:sequence>
     </xs:complexType>
     <xs:complexType name="MaskedData">
         <xs:sequence>
             <xs:element name="MeanFWHM" type="incf:MeanFWHMData"/>
-            <xs:element name="FWHMX" type="incf:TimeSeriesQAValuesData"/>
-            <xs:element name="FWHMY" type="incf:TimeSeriesQAValuesData"/>
-            <xs:element name="FWHMZ" type="incf:TimeSeriesQAValuesData"/>
+            <xs:element name="FWHMX" type="incf:BIRNfMRIQAValuesData"/>
+            <xs:element name="FWHMY" type="incf:BIRNfMRIQAValuesData"/>
+            <xs:element name="FWHMZ" type="incf:BIRNfMRIQAValuesData"/>
         </xs:sequence>
     </xs:complexType>
     <xs:complexType name="MaskedDetrendedData">
@@ -47,14 +47,14 @@
             <xs:element name="MeanROIMiddleSlice" type="xs:float"/>
             <xs:element name="MeanSNRROIMiddleSlice" type="xs:float"/>
             <xs:element name="MeanSFNRROIMiddleSlice" type="xs:float"/>
-            <xs:element name="Means" type="incf:TimeSeriesQAValuesData"/>
-            <xs:element name="RunningDifferenceMeans" type="incf:TimeSeriesQAValuesData"/>
-            <xs:element name="OutlierVoxelPcts" type="incf:TimeSeriesQAValuesData"/>
-            <xs:element name="CenterOfMassX" type="incf:TimeSeriesQAValuesData"/>
-            <xs:element name="CenterOfMassY" type="incf:TimeSeriesQAValuesData"/>
-            <xs:element name="CenterOfMassZ" type="incf:TimeSeriesQAValuesData"/>
-            <xs:element name="FrequencySpectrumMeanOverMask" type="incf:TimeSeriesQAValuesData"/>
-            <xs:element name="FrequencySpectrumMaxOverMask" type="incf:TimeSeriesQAValuesData"/>
+            <xs:element name="Means" type="incf:BIRNfMRIQAValuesData"/>
+            <xs:element name="RunningDifferenceMeans" type="incf:BIRNfMRIQAValuesData"/>
+            <xs:element name="OutlierVoxelPcts" type="incf:BIRNfMRIQAValuesData"/>
+            <xs:element name="CenterOfMassX" type="incf:BIRNfMRIQAValuesData"/>
+            <xs:element name="CenterOfMassY" type="incf:BIRNfMRIQAValuesData"/>
+            <xs:element name="CenterOfMassZ" type="incf:BIRNfMRIQAValuesData"/>
+            <xs:element name="FrequencySpectrumMeanOverMask" type="incf:BIRNfMRIQAValuesData"/>
+            <xs:element name="FrequencySpectrumMaxOverMask" type="incf:BIRNfMRIQAValuesData"/>
         </xs:all>
     </xs:complexType>
     <xs:complexType name="MeanFWHMData">
@@ -66,7 +66,7 @@
         <xs:attribute name="individual" type="xs:integer"/>
         <xs:attribute name="rel_grand_mean" type="xs:integer"/>
     </xs:complexType>
-    <xs:complexType name="TimeSeriesQAValuesData">
+    <xs:complexType name="BIRNfMRIQAValuesData">
         <xs:attribute name="absolute_mean" type="xs:float"/>
         <xs:attribute name="relative_mean" type="xs:float"/>
     </xs:complexType>
