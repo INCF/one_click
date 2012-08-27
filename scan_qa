@@ -1,0 +1,183 @@
+#!/usr/bin/python
+
+import sys
+import os
+import tempfile
+import optparse
+import xml.dom.minidom
+import pyxnat
+
+image_scan_tags = ('xnat:image_session_ID', 
+                   'xnat:note', 
+                   'xnat:quality', 
+                   'xnat:condition', 
+                   'xnat:series_description', 
+                   'xnat:documentation', 
+                   'xnat:scanner', 
+                   'xnat:modality', 
+                   'xnat:frames', 
+                   'xnat:operator', 
+                   'xnat:file', 
+                   'xnat:validation')
+
+def update_scan(scan, doc):
+    fo = tempfile.NamedTemporaryFile(delete=False)
+    try:
+        fo.write(doc.toxml())
+        fo.close()
+        scan.create(xml=fo.name)
+    finally:
+        os.unlink(fo.name)
+
+def element_data(element):
+    data = ''
+    for child_element in element.childNodes:
+        if child_element.nodeType == child_element.TEXT_NODE:
+            data += child_element.nodeValue
+    return data.strip()
+
+def list(scan):
+    doc = xml.dom.minidom.parseString(scan.get())
+    print scan.id()
+    for element in doc.getElementsByTagName('xnat:INCFQCAssessment'):
+        print '    %s: %s' % (element_data(element), 
+                              element.getAttribute('type'))
+    return
+
+progname = os.path.basename(sys.argv[0])
+
+usage = 'usage: %prog -u user -p password XNAT_URL command experiment_id [...]'
+description = """Manipulate QA information in XNAT scan data.
+
+Commands and arguments are:
+
+    list [scan]
+
+    add scan assessment_name assessment_type
+
+    remove scan assessment_name
+"""
+
+parser = optparse.OptionParser(usage=usage, description=description)
+parser.add_option('-u', '--user', dest='user', help='the XNAT user')
+parser.add_option('-p', '--password', dest='password', help='XNAT password')
+
+(opts, args) = parser.parse_args()
+
+if not opts.xnat_url:
+    sys.stderr.write('%s: XNAT base URL not given\n' % progname)
+    sys.exit(1)
+
+if not opts.user:
+    sys.stderr.write('%s: XNAT user not given\n' % progname)
+    sys.exit(1)
+
+if not opts.password:
+    sys.stderr.write('%s: XNAT password not given\n' % progname)
+    sys.exit(1)
+
+if len(args) < 3:
+    sys.stderr.write('%s: not enough arguments\n' % progname)
+    sys.exit(1)
+
+xnat_url = args.pop(0)
+command = args.pop(0)
+experiment_id = args.pop(0)
+
+if command not in ('list', 'add', 'remove'):
+    sys.stderr.write('%s: unknown command "%s"\n' % progname)
+    sys.exit(1)
+
+i = pyxnat.Interface(xnat_url, opts.user, opts.password)
+
+# i.select() will return an iterable that doesn't support indexing, so 
+# we have to be explicit here
+experiment = [ e for e in i.select('/experiments/%s' % experiment_id) ][0]
+
+if not experiment.exists():
+    sys.stderr.write('%s: can\'t find experiment %s\n' % (progname, 
+                                                          experiment_id))
+    sys.exit(1)
+
+if command == 'list':
+    if args:
+        scan_name = args.pop(0)
+        scan = experiment.scan(scan_name)
+        if not scan.exists():
+            sys.stderr.write('%s: can\'t find scan %s for experiment %s\n' % 
+                             (progname, experiment_id, scan_name))
+            sys.exit(1)
+        list(scan)
+    else:
+        for scan in experiment.scans():
+            list(scan)
+
+if command == 'add':
+    if len(args) < 3:
+        sys.stderr.write('%s: not enough arguments to "add" command\n' % 
+                         progname)
+        sys.exit(1)
+    scan_name = args.pop(0)
+    assessment_name = args.pop(0)
+    type = args.pop(0)
+    scan = experiment.scan(scan_name)
+    if not scan.exists():
+        sys.stderr.write('%s: can\'t find scan %s for experiment %s\n' % 
+                         (progname, experiment_id, scan_name))
+        sys.exit(1)
+    doc = xml.dom.minidom.parseString(scan.get())
+    for element in doc.getElementsByTagName('xnat:INCFQCAssessment'):
+        if element_data(element) == assessment_name:
+            sys.stderr.write('%s: "%s" already exists for scan %s\n' % 
+                             (progname, assessment_name, scan_name))
+            sys.exit(1)
+    # the element we insert has to be the last imageScanData tag; since 
+    # we need to do an insertBefore(), we need to find the first 
+    # non-imageScanData tag (or know there are none)
+    root = doc.childNodes[0]
+    el = root.childNodes[0]
+    while el:
+        if el.nodeType == el.ELEMENT_NODE:
+            if el.nodeName not in image_scan_tags:
+                # first non-imageScanData tag
+                break
+        el = el.nextSibling
+    new_element = doc.createElement('xnat:INCFQCAssessment')
+    new_element.setAttribute('type', type)
+    new_element.appendChild(doc.createTextNode(assessment_name))
+    if not el:
+        root.appendChild(new_element)
+    else:
+        root.insertBefore(new_element, el)
+    update_scan(scan, doc)
+
+if command == 'remove':
+    if len(args) < 2:
+        sys.stderr.write('%s: not enough arguments to "remove" command\n' % 
+                         progname)
+        sys.exit(1)
+    scan_name = args.pop(0)
+    assessment_name = args.pop(0)
+    scan = experiment.scan(scan_name)
+    if not scan.exists():
+        sys.stderr.write('%s: can\'t find scan %s for experiment %s\n' % 
+                         (progname, experiment_id, scan_name))
+        sys.exit(1)
+    doc = xml.dom.minidom.parseString(scan.get())
+    e_list = [ e for e in doc.getElementsByTagName('xnat:INCFQCAssessment') ]
+    removed_flag = False
+    for element in e_list:
+        name = element_data(element)
+        if name == assessment_name:
+            type = element.getAttribute('type')
+            print 'removing %s (%s)' % (name, type)
+            element.parentNode.removeChild(element)
+            removed_flag = True
+    if not removed_flag:
+        sys.stderr.write('%s: no matching assessments found\n' % progname)
+        sys.exit(1)
+    update_scan(scan, doc)
+
+sys.exit(0)
+
+# eof

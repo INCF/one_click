@@ -1,0 +1,86 @@
+#!/usr/bin/python
+
+import sys
+import os
+import optparse
+import pyxnat
+
+progname = os.path.basename(sys.argv[0])
+
+usage = 'usage: %prog -u user -p pass [-d dir -r res_name] XNAT_URL exp_id ass_name xml_file'
+description = """Create an assessment and upload files.
+
+Create an assessment for the given experiment using the given XML file.
+
+If a directory is given, files beneath the directory are uploaded to the assessment in the given resource (so -d requires -r).
+"""
+
+parser = optparse.OptionParser(usage=usage, description=description)
+parser.add_option('-u', '--user', dest='user', help='the XNAT user')
+parser.add_option('-p', '--password', dest='password', help='XNAT password')
+parser.add_option('-d', '--dir', dest='dir', help='Directory continaing files to upload')
+parser.add_option('-r', '--resource', dest='resource_name', help='Resource name')
+
+(opts, args) = parser.parse_args()
+
+if not opts.user:
+    sys.stderr.write('%s: XNAT user not given\n' % progname)
+    sys.exit(1)
+
+if not opts.password:
+    sys.stderr.write('%s: XNAT password not given\n' % progname)
+    sys.exit(1)
+
+if opts.dir and not opts.resource_name:
+    sys.stderr.write('%s: -d given without -r\n' % progname)
+    sys.exit(1)
+
+print args
+if len(args) != 4:
+    sys.stderr.write('%s: wrong number of arguments\n' % progname)
+    sys.exit(1)
+
+xnat_url = args.pop(0)
+experiment_id = args.pop(0)
+assessment_name = args.pop(0)
+xml_file = args.pop(0)
+
+i = pyxnat.Interface(xnat_url, opts.user, opts.password)
+
+# i.select() will return an iterable that doesn't support indexing, so 
+# we have to be explicit here
+experiment = [ e for e in i.select('/experiments/%s' % experiment_id) ][0]
+
+if not experiment.exists():
+    sys.stderr.write('%s: can\'t find experiment %s\n' % (progname, 
+                                                          experiment_id))
+    sys.exit(1)
+
+assessment = experiment.assessor(assessment_name)
+if assessment.exists():
+    sys.stderr.write('%s: assessment %s exists for experiment %s\n' % 
+                     (progname, assessment_name, experiment_id))
+    sys.exit(1)
+
+if not os.path.exists(xml_file):
+    sys.stderr.write('%s: can\'t find file %s\n' % (progname, xml_file))
+    sys.exit(1)
+
+print 'creating assessment %s...' % assessment_name
+assessment.create(xml=xml_file)
+
+if opts.dir:
+    dir = opts.dir.rstrip('/')
+    print 'creating resource %s...' % opts.resource_name
+    resource = assessment.out_resource(opts.resource_name)
+    resource.create()
+    for (path, dirs, fnames) in os.walk(dir):
+        for fname in fnames:
+            full_path = '%s/%s' % (path, fname)
+            rel_path = full_path[len(dir)+1:]
+            print 'uploading %s...' % rel_path
+            file = resource.file(rel_path).put(open(full_path).read())
+
+sys.exit(0)
+
+# eof
