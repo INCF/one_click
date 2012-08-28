@@ -7,7 +7,9 @@
     <xs:complexType name="BaseQAAssessorData">
         <xs:complexContent>
             <xs:extension base="xnat:mrAssessorData">
-                <xs:attribute name="source_scan" type="xs:string"/>
+                <xs:sequence>
+                    <xs:element name="source_scan" type="xs:string" minOccurs="1" maxOccurs="unbounded"/>
+                </xs:sequence>
             </xs:extension>
         </xs:complexContent>
     </xs:complexType>
@@ -99,7 +101,7 @@
             <xs:element name="MinIntensity" type="xs:float"/>
             <xs:element name="MaxIntensity" type="xs:float"/>
             <xs:element name="MeanIntensity" type="xs:float"/>
-            <xs:element name="StdIntensit" type="xs:float"/>
+            <xs:element name="StdIntensity" type="xs:float"/>
             <xs:element name="NVoxels" type="xs:float"/>
             <xs:element name="Volume" type="xs:float"/>
         </xs:all>

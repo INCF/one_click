@@ -2871,7 +2871,7 @@ rebinning, 6=FORE)</xs:documentation>
 			</xs:element>
 			<xs:element name="file" type="xnat:abstractResource" minOccurs="0" maxOccurs="unbounded"/>
 			<xs:element name="validation" type="xnat:validationData" minOccurs="0"/>
-            <xs:element name="INCFQCAssessment" minOccurs="0" maxOccurs="unbounded">
+            <xs:element name="INCFQAAssessment" minOccurs="0" maxOccurs="unbounded">
                 <xs:complexType>
                     <xs:simpleContent>
                         <xs:extension base="xs:string">
