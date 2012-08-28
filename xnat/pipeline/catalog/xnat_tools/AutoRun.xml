@@ -86,6 +86,9 @@
 		</step> 
 		<step id="2" description="Create NIfTI Volumes"  continueOnFailure="true">
 			<resource name="CreateNIfTI" location="incf">
+				<argument id="session">
+					<value>^/Pipeline/parameters/parameter[name='sessionLabel']/values/unique/text()^</value>
+				</argument>
 				<argument id="xnatId">
 					<value>^/Pipeline/parameters/parameter[name='session']/values/unique/text()^</value>
 				</argument>
