@@ -5,16 +5,249 @@
 
 import sys
 import os
+import optparse
+import string
 import tempfile
 import shutil
 import subprocess
-import uuid
+import StringIO
+import getpass
+import csv
 import dicom
+import httplib2
+
+print """
+TODO: usage, description, options
+check server version
+remove my credentials
+better user errors on http request faults
+xsiType=mrSessionData
+have_storescu
+
+modules:
+dicom
+"""
+
+#############################################################################
+# classes and functions
+#
 
 class InvalidDicomError(Exception):
     """Exception raised when read_dicom_file() tries to read a file that 
     doesn't have DICM at byte 128.
     """
+
+class RequestError(Exception):
+    """error in an HTTP request"""
+
+    def __init__(self, method, url, status):
+        self.method = method
+        self.url = url
+        self.status = status
+        return
+
+    def __str__(self):
+        return '%s %s returned %s' % (self.method, self.url, self.status)
+
+class XNAT:
+
+    def __init__(self, user_name, password):
+        h = httplib2.Http()
+        h.add_credentials(user_name, password)
+        url = '%s/data/JSESSION' % base_url
+        (response, content) = h.request(url)
+        if response['status'] != '200':
+            raise ValueError
+        if 'set-cookie' not in response:
+            raise ValueError
+        self.jsession_cookie = response['set-cookie'].split(';')[0]
+        self.user_name = user_name
+        self._projects = None
+        self._user_projects = None
+        self._subjects = {}
+        self._sessions = {}
+        return
+
+    def _request(self, url, method='GET', expected_status='200'):
+        full_url = '%s/data%s' % (base_url, url)
+        h = httplib2.Http()
+        headers = {'Cookie': self.jsession_cookie}
+        (response, content) = h.request(full_url, method, headers=headers)
+        if response['status'] != expected_status:
+            raise RequestError(method, full_url, response['status'])
+        return (response, content)
+
+    def _request_table(self, url):
+        (response, content) = self._request('%s?format=csv' % url)
+        reader = csv.reader(StringIO.StringIO(content))
+        header = reader.next()
+        return [ dict(zip(header, row)) for row in reader ]
+
+    def close(self):
+        self._request('/JSESSION', 'DELETE')
+        return
+
+    def projects(self):
+        if self._projects is None:
+            self._projects = []
+            for project in self._request_table('/projects'):
+                self._projects.append(project['ID'])
+        return self._projects
+
+    def user_projects(self):
+        if self._user_projects is None:
+            self._user_projects = []
+            for project in self.projects():
+                user_url = '/projects/%s/users' % project
+                for user in self._request_table(user_url):
+                    if user['login'] == self.user_name:
+                        self._user_projects.append(project)
+                        break
+        return self._user_projects
+
+    def create_project(self, project):
+        if project in self.projects():
+            raise ValueError('project %s exists' % project)
+        self._request('/projects/%s' % project, 'PUT', '200')
+        # reset the cache
+        self._projects = None
+        self._user_projects = None
+        return
+
+    def subjects(self, project):
+        if project not in self.projects():
+            raise ValueError('project %s not found' % project)
+        if project not in self._subjects:
+            self._subjects[project] = []
+            url = '/projects/%s/subjects' % project
+            for subject in self._request_table(url):
+                self._subjects[project].append(subject['label'])
+            self._subjects[project].sort()
+        return self._subjects[project]
+
+    def create_subject(self, project, subject):
+        if project not in self.projects():
+            raise ValueError('project %s not found' % project)
+        if subject in self.subjects(project):
+            raise ValueError('subject %s exists in project %s' % (subject, 
+                                                                  project))
+        self._request('/projects/%s/subjects/%s' % (project, subject), 
+                      'PUT', 
+                      '201')
+        # reset the cache -- this will exist due to our self.subjects(project) 
+        # call above
+        del self._subjects[project]
+        return
+
+    def sessions(self, project):
+        if project not in self._sessions:
+            self._sessions[project] = {}
+        sessions = []
+        for subject in self.subjects(project):
+            if subject not in self._sessions[project]:
+                self._sessions[project][subject] = []
+                url = '/projects/%s/subjects/%s/experiments' % (project, 
+                                                                subject)
+                for session in self._request_table(url):
+                    self._sessions[project][subject].append(session['label'])
+            sessions.extend(self._sessions[project][subject])
+        sessions.sort()
+        return sessions
+
+    def create_session(self, project, subject, session):
+        if project not in self.projects():
+            raise ValueError('project %s not found' % project)
+        if subject not in self.subjects(project):
+            raise ValueError('no subject %s in project %s' % (subject, project))
+        if session in self.sessions(project):
+            raise ValueError('session %s exists in project %s' % (session, 
+                                                                  project))
+        fmt = '/projects/%s/subjects/%s/experiments/%s?xsiType=mrSessionData'
+        url = fmt % (project, subject, session)
+        self._request(url, 'PUT', '201')
+        # reset the cache -- this will exist due to the calls above
+        del self._sessions[project][subject]
+        return
+
+def read_dicom_file(fname):
+    """Read a DICOM file, raising an exception if the 'DICM' marker is not 
+    present at byte 128.
+
+    dicom.read_file() does this as of pydicom 0.9.5.
+    """
+    fo = open(fname)
+    try:
+        preamble = fo.read(128)
+        magic = fo.read(4)
+        if len(preamble) != 128 or magic != 'DICM':
+            raise InvalidDicomError
+        fo.seek(0)
+        do = dicom.read_file(fo)
+    finally:
+        fo.close()
+    return do
+
+def patient_studies(dicom_files, studies, patient_id):
+    """given our dicom_files and studies records and a patient ID, return a 
+    list of (datetime, study instance UID) ordered by date+time"""
+    ps = []
+    for uid in dicom_files[patient_id]:
+        datetime = '%s%s' % studies[uid]
+        ps.append((datetime, uid))
+    ps.sort(lambda a, b: cmp(a[0], b[0]))
+    return ps
+
+def new_uid(old_uid):
+    """Create a new DICOM UID.
+
+    Return an already-created UID if the old UID has already been replaced.
+    """
+    if old_uid not in uids:
+        uids[old_uid] = '2.25.%d' % uuid.uuid1().int
+    return uids[old_uid]
+
+def identifier_is_valid(identifier):
+    """Check if a project/subject/session identifier is valid.
+
+    Identifiers can only contain alphanumeric characters and underscores.
+    """
+    if not isinstance(identifier, basestring):
+        raise ValueError('identifier must be a string')
+    for c in identifier:
+        if c not in string.letters + string.digits + '_':
+            return False
+    return True
+
+#############################################################################
+# defaults and definitions
+#
+
+progname = os.path.basename(sys.argv[0])
+
+try:
+    subprocess.call(['storescu'], 
+                    stdout=subprocess.PIPE, 
+                    stderr=subprocess.PIPE)
+except:
+    have_storescu = False
+else:
+    have_storescu = True
+"""
+    if not have_storescu:
+        print 'WARNING: storescu (the program used to send data to the server) '
+        print 'was not found on your system.  Please install DCMTK (or adjust '
+        print 'your path) before proceeding.'
+        print
+"""
+
+usage = 'usage: %prog ...'
+description = """Do something.
+
+Like this.
+"""
+
+base_url = 'http://xnat.incf.org/xnat/'
+base_url = base_url.rstrip('/')
 
 deident_tags = [(0x0008, 0x0050), # Accession Number
                 (0x0008, 0x0080), # InstitutionName
@@ -42,133 +275,298 @@ deident_tags = [(0x0008, 0x0050), # Accession Number
 # del dicom_object[tag] does, where tag = dicom.tag.Tag((xxxx, yyyy))
 deident_tags = [ dicom.tag.Tag(tag) for tag in deident_tags ]
 
-def new_uid(old_uid):
-    """Create a new DICOM UID.
+#############################################################################
+# command line processing
+#
 
-    Return an already-created UID if the old UID has already been replaced.
-    """
-    if old_uid not in uids:
-        uids[old_uid] = '2.25.%d' % uuid.uuid1().int
-    return uids[old_uid]
+parser = optparse.OptionParser(usage=usage, description=description)
+parser.add_option('-s', '--long', dest='check', default=False, action='store_true', help='help string')
 
-def read_dicom_file(fname):
-    """Read a DICOM file, raising an exception if the 'DICM' marker is not 
-    present at byte 128.
+(opts, args) = parser.parse_args()
 
-    dicom.read_file() does this as of pydicom 0.9.5.
-    """
-    fo = open(fname)
+if not args:
+    sys.stderr.write('%s: no sources given\n' % progname)
+    sys.exit(1)
+
+#############################################################################
+# begin execution
+#
+
+#----------------------------------------------------------------------------
+# upload agreement
+#
+
+print
+print 'You are about to upload data to the INCF neuroimaging data store.  The '
+print 'INCF encourages high ethical standards in data sharing, and requires '
+print 'you as the data provider to assert the following:'
+print
+print '    I have the right to upload and share this data and I have gained '
+print '    local ethics approval for the sharing of this data.  I consent '
+print '    to this data being freely available for download.  INCF is '
+print '    not responsible for checking that the data meets these criteria.'
+print
+response = raw_input('Do you agree to these terms (enter "Yes" to agree)? ')
+print
+if response.strip().lower() != 'yes':
+    print 'exiting'
+    sys.exit(2)
+print
+
+#----------------------------------------------------------------------------
+# scan for DICOM files
+#
+
+print 'scanning for files...'
+
+all_files = []
+for arg in args:
+    if os.path.isfile(arg):
+        all_files.append(arg)
+    elif os.path.isdir(arg):
+        for (dirpath, dirnames, fnames) in os.walk(arg):
+            all_files.extend([ '%s/%s' % (dirpath, f) for f in fnames ])
+    else:
+        sys.stderr.write('%s: %s is not a file or directory\n' % (progname, 
+                                                                  arg))
+
+print 'reading all_files...'
+
+# dicom_files[PatientID][StudyInstanceUID] -> fname
+dicom_files = {}
+
+# studies[StudyInstanceUID] -> (study date, study time)
+studies = {}
+
+for (i, fname) in enumerate(all_files):
+    print '%d/%d: %s' % (i+1, len(all_files), fname)
     try:
-        preamble = fo.read(128)
-        magic = fo.read(4)
-        if len(preamble) != 128 or magic != 'DICM':
-            raise InvalidDicomError
-        fo.seek(0)
-        do = dicom.read_file(fo)
-    finally:
-        fo.close()
-    return do
+        do = read_dicom_file(fname)
+        patient_files = dicom_files.setdefault(do.PatientID, {})
+        patient_files.setdefault(do.StudyInstanceUID, []).append(fname)
+        if do.StudyInstanceUID not in studies:
+            studies[do.StudyInstanceUID] = (do.StudyDate, do.StudyTime)
+    except:
+        continue
 
-progname = os.path.basename(sys.argv[0])
-uids = {}
+#----------------------------------------------------------------------------
+# prompt for information
+#
 
-try:
-    subprocess.call(['storescu'], 
-                    stdout=subprocess.PIPE, 
-                    stderr=subprocess.PIPE)
-except:
-    have_storescu = False
+# xnat_projects[PatientID] -> xnat project
+xnat_projects = {}
+
+# xnat_subjects[PatientID] -> xnat subject name
+xnat_subjects = {}
+
+# xnat_sessions[StudyInstanceUID] -> xnat session ID
+xnat_sessions = {}
+
+print
+
+if not dicom_files:
+    print 'no DICOM files found'
+    sys.exit(0)
+
+n_sessions = sum([ len(df) for df in dicom_files.itervalues() ])
+if n_sessions == 1:
+    print '1 subject and 1 session found'
+elif len(dicom_files) == 1:
+    print '1 subject and %d sessions found' % n_sessions
 else:
-    have_storescu = True
+    print '%d subjects and %d sessions found' % (len(dicom_files), n_sessions)
 
-if len(sys.argv) != 5:
-    print
-    print 'Usage: %s <dir> <user> <subject> <session>' % progname
-    print
-    print 'Push data to the INCF XNAT server'
-    print
-    print 'dir -- Directory containing DICOM data.  This directory and its '
-    print '       subdirectories are recursively searched for data.'
-    print
-    print 'user -- Your INCF portal (www.incf.org) username.'
-    print
-    print 'subject -- The subject name as you would like it to appear on '
-    print '           the INCF XNAT.'
-    print
-    print 'session -- The session name as you would like it to appear on '
-    print '           the INCF XNAT.  This must be unique across all subjects '
-    print '           you send to the server.'
-    print
-    print 'For more information, please see http://xnat.incf.org/'
-    print
-    if not have_storescu:
-        print 'WARNING: storescu (the program used to send data to the server) '
-        print 'was not found on your system.  Please install DCMTK (or adjust '
-        print 'your path) before proceeding.'
-        print
-    sys.exit(1)
+print
+print 'Let\'s get some information before sending this data.'
+print
 
-if not have_storescu:
-    sys.stderr.write("%s: storescu not found in your path\n" % progname)
-    sys.stderr.write('please install DCMTK or adjust your path before proceeding\n')
-    sys.exit(1)
+"""
+while True:
+    user_name = None
+    while not user_name:
+        user_name = raw_input('INCF user name: ')
+    password = None
+    while not password:
+        password = getpass.getpass('INCF password: ')
+    try:
+        xnat = XNAT(user_name, password)
+        break
+    except ValueError:
+        print 'error connecting to INCF'
+"""
+print '**********************************************************'
+print '**********************************************************'
+print '**********************************************************'
+print '**********************************************************'
+print '**********************************************************'
+print '**********************************************************'
+print '**********************************************************'
+print '**********************************************************'
+xnat = XNAT('christian', 'tImWqtPo')
 
-(dir, user, subject, session) = sys.argv[1:]
+print
+print 'Each session will need a project, subject, and session label on the '
+print 'server.  Session identifiers must be unique within each project.'
+print
 
-staged_files = []
-
-tempdir = tempfile.mkdtemp()
-try:
-    files = []
-    for (dirpath, dirnames, filenames) in os.walk(dir):
-        for fname in filenames:
-            files.append('%s/%s' % (dirpath, fname))
-    i = 0
-    for (n_file, fname) in enumerate(files):
-        print '%6d/%6d: %s' % (n_file, len(files), fname)
-        try:
-            do = read_dicom_file(fname)
-        except:
+subject_number = 0
+for patient_id in sorted(dicom_files):
+    subject_number += 1
+    print 'Subject %s: %s' % (subject_number, patient_id)
+    print
+    print 'Projects that you can upload to are marked with an asterisk.  Please '
+    print 'select one for subject %s or enter a different name to create a new '
+    print 'project.  Project names can only contain alphanumeric characters '
+    print 'or underscores.'
+    print
+    print 'Projects on the INCF server are:'
+    print
+    for p in xnat.projects():
+        if p in xnat.user_projects():
+            print '    * %s' % p
+        else:
+            print '      %s' % p
+    print
+    project = None
+    while not project:
+        project = raw_input('Project: ')
+        if not project:
             continue
-        do.StudyComments = 'incf:%s' % user
-        do.PatientsName = subject
-        do.PatientID = session
-        for name in ('SOPInstanceUID', 
-                     'StudyInstanceUID', 
-                     'SeriesInstanceUID', 
-                     'FrameofReferenceUID'):
-            try:
-                el = do.data_element(name)
-            except KeyError:
-                pass
-            else:
-                if el is not None:
-                    do.data_element(name).value = new_uid(el.value)
-                for tag in deident_tags:
-                    if tag in do:
-                        del do[tag]
-        out_fname = '%s/%08d' % (tempdir, i)
+        if project in xnat.user_projects():
+            break
+        if project in xnat.projects():
+            print '%s exists but you don\'t have permission to upload to it.' % project
+            project = None
+            continue
+        if identifier_is_valid(project):
+            print 'Project names can only contain alphanumeric characters and underscores.'
+            project = None
+            continue
+        xnat.create_project(project)
+    xnat_projects[patient_id] = project
+    print
+    if not xnat.subjects(project):
+        print 'Now choose an identifier for this subject on the INCF server.  There are no subjects in this project, so this will create a new one.  Subject identifiers can only contain alphanumeric characters and underscores.'
+    else:
+        print 'The existing subjects for this project are:'
+        print
+        for subject in xnat.subjects(project):
+            print '    %s' % subject
+        print
+        print 'Now choose an identifier for this subject on the INCF server.  You can choose an existing subject or create a new subject by entering a new subject identifier.  Subject identifiers can only contain alphanumeric characters and underscores.'
+    print
+    subject = None
+    while not subject:
+        subject = raw_input('Subject: ')
+        if not subject:
+            continue
+        if identifier_is_valid(subject):
+            print 'Subject identifiers can only contain alphanumeric characters and underscores.'
+            subject = None
+            continue
+    if subject not in xnat.subjects(project):
+        xnat.create_subject(project, subject)
+    xnat_subjects[patient_id] = subject
+    print
+    session_number = 0
+    ps = patient_studies(dicom_files, studies, patient_id)
+    for(date_time, study_instance_uid) in ps:
+        session_number += 1
+        date_time_fmt = '%s-%s-%s %s:%s:%s' % (date_time[0:4], 
+                                               date_time[4:6], 
+                                               date_time[6:8], 
+                                               date_time[8:10], 
+                                               date_time[10:12], 
+                                               date_time[12:14])
+        print 'Session %d for this subject was acquired %s.' % (session_number, 
+                                                                date_time_fmt)
+        print
+        if not xnat.sessions(project):
+            print 'Choose a session identifier.  There are currently no sessions for this project.  Session identifiers can only contain alphanumeric characters and underscores.'
+        else:
+            print 'Choose a session identifier.  It must be unique for this project, so cannot take any of the following (existing) values:'
+            print
+            for s in xnat.sessions(project):
+                print '    %s' % s
+        print
+        print 'Session identifiers can only contain alphanumeric characters and underscores.'
+        session = None
+        while not session:
+            session = raw_input('Session: ')
+            if not session:
+                continue
+            if session in xnat.sessions(project):
+                print 'Session %s exists.' % session
+                session = None
+                continue
+            if not identifier_is_valid(session):
+                print 'Session identifiers can only contain alphanumeric characters and underscores.'
+                session = None
+                continue
+        xnat.create_session(project, subject, session)
+        xnat_sessions[study_instance_uid] = session
+        print
+
+print
+print 'That\'s all for now.'
+print
+print 'Uploading...'
+print
+
+#############################################################################
+# prepare and upload
+#
+
+session_number = 0
+for patient_id in sorted(dicom_files):
+    ps = patient_studies(dicom_files, studies, patient_id)
+    for(date_time, study_instance_uid) in ps:
+        session_number += 1
+
+session_number, n_sessions
+'Subject %s: %s -> %s %s' % (subject_number, patient_id, xnat_projects[patient_id], xnat_subjects[patient_id])
+xnat_sessions[study_instance_uid]
+
+"""
+        tempdir = tempfile.mkdtemp()
+        try:
+            fnames = dicom_files[patient_id][study_instance_uid]
+            for (i, fname) in enumerate(fnames):
+                print 'preparing session %d/%d, file %d/%d' % (session_number, 
+                                                               n_sessions, 
+                                                               i, 
+                                                               len(fnames))
+                do = read_dicom_file(fname)
+                do.StudyComments = 'incf:%s' % user
+                do.PatientsName = subject
+                do.PatientID = session
+                for name in ('SOPInstanceUID', 
+                             'StudyInstanceUID', 
+                             'SeriesInstanceUID', 
+                             'FrameofReferenceUID'):
+                try:
+                    el = do.data_element(name)
+                except KeyError:
+                    pass
+                else:
+                    if el is not None:
+                        do.data_element(name).value = new_uid(el.value)
+                    for tag in deident_tags:
+                        if tag in do:
+                            del do[tag]
+                out_fname = '%s/%08d' % (tempdir, i)
         i += 1
         dicom.write_file(out_fname, do)
         staged_files.append(out_fname)
-    if not staged_files:
-        sys.stderr.write('%s: no DICOM files found\n' % progname)
-        sys.exit(1)
-    print
-    if len(staged_files) == 1:
-        print 'sending 1 DICOM file'
-    else:
-        print 'sending %d DICOM files' % len(staged_files)
-    print
-    base_args = ['storescu', '-v', '-aec', 'XNAT', 'xnat.incf.org', '104']
-    while staged_files:
-        # make a copy
-        args = base_args[:]
-        args.extend(staged_files[:1000])
-        staged_files = staged_files[1000:]
-        subprocess.call(args)
-finally:
-    shutil.rmtree(tempdir)
+        finally:
+            shutil.rmtree(tempdir)
+"""
+
+#############################################################################
+# clean up and exit
+#
+
+xnat.close()
 
 sys.exit(0)
 
