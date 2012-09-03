@@ -24,6 +24,8 @@ better user errors on http request faults
 xsiType=mrSessionData
 have_storescu
 
+--version
+
 modules:
 dicom
 """
