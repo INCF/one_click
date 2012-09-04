@@ -10,25 +10,12 @@ import string
 import tempfile
 import shutil
 import subprocess
+import uuid
 import StringIO
 import getpass
 import csv
 import dicom
 import httplib2
-
-print """
-TODO: usage, description, options
-check server version
-remove my credentials
-better user errors on http request faults
-xsiType=mrSessionData
-have_storescu
-
---version
-
-modules:
-dicom
-"""
 
 #############################################################################
 # classes and functions
@@ -242,14 +229,16 @@ def parse_server_configuration(data):
         (key, value) = line.split(' ', 1)
         if key == 'client_protocol':
             conf.setdefault(key, []).append(value)
-        elif key == 'xnat_base':
-            conf['xnat_base'] = value
+        elif key in ('xnat_base', 'push_target'):
+            conf[key] = value
         else:
             conf.setdefault(key, []).append(value)
-    if 'client_protocol' not in conf:
-        raise KeyError('client_protocol')
-    if 'xnat_base' not in conf:
-        raise KeyError('xnat_base')
+    for key in ('client_protocol', 'xnat_base', 'push_target'):
+        if key not in conf:
+            raise KeyError(key)
+    (push_host, push_port) = conf['push_target'].split(':')
+    conf['push_host'] = push_host
+    conf['push_port'] = push_port
     return conf
 
 #############################################################################
@@ -267,17 +256,15 @@ except:
 else:
     have_storescu = True
 
-usage = 'usage: %prog ...'
-description = """Do something.
+storescu_warning = """WARNING: storescu (the program used to send data to
+the server) was not found on your system.  Please install DCMTK (or adjust
+your path) before proceeding."""
 
-Like this.
+usage = 'usage: %prog <DICOM file or directory> [...]' 
 
-    if not have_storescu:
-        print 'WARNING: storescu (the program used to send data to the server) '
-        print 'was not found on your system.  Please install DCMTK (or adjust '
-        print 'your path) before proceeding.'
-        print
-"""
+version = '%prog 2.0'
+
+description = """Upload DICOM data to the INCF data sharing server."""
 
 conf_url = 'http://localhost/conf.txt'
 
@@ -307,12 +294,24 @@ deident_tags = [(0x0008, 0x0050), # Accession Number
 # del dicom_object[tag] does, where tag = dicom.tag.Tag((xxxx, yyyy))
 deident_tags = [ dicom.tag.Tag(tag) for tag in deident_tags ]
 
+# our cache of new UIDs: uids[old UID] -> new UID
+uids = {}
+
+files_per_push = 500
+
 #############################################################################
 # command line processing
 #
 
-parser = optparse.OptionParser(usage=usage, description=description)
-parser.add_option('-s', '--long', dest='check', default=False, action='store_true', help='help string')
+if have_storescu:
+    parser = optparse.OptionParser(usage=usage, 
+                                   description=description, 
+                                   version=version)
+else:
+    parser = optparse.OptionParser(usage=usage, 
+                                   description=description, 
+                                   version=version, 
+                                   epilog=storescu_warning)
 
 (opts, args) = parser.parse_args()
 
@@ -337,12 +336,11 @@ try:
         raise ValueError(msg)
     server_configuration = parse_server_configuration(content)
 except:
-    raise
     sys.stderr.write('%s: error in server configuation\n' % progname)
     sys.stderr.write('please contact xnat-admin@incf.org for assistance\n')
     sys.exit(1)
 
-if '5' not in server_configuration['client_protocol']:
+if '2' not in server_configuration['client_protocol']:
     sys.stderr.write('%s: server configuration error\n' % progname)
     sys.stderr.write('\n')
     sys.stderr.write('The INCF server does not support the protocol used in this program.  Please \n')
@@ -388,9 +386,9 @@ for arg in args:
         sys.stderr.write('%s: %s is not a file or directory\n' % (progname, 
                                                                   arg))
 
-print 'reading all_files...'
+print 'reading all files...'
 
-# dicom_files[PatientID][StudyInstanceUID] -> fname
+# dicom_files[PatientID][StudyInstanceUID] -> list of file names
 dicom_files = {}
 
 # studies[StudyInstanceUID] -> (study date, study time)
@@ -438,7 +436,6 @@ print
 print 'Let\'s get some information before sending this data.'
 print
 
-"""
 while True:
     user_name = None
     while not user_name:
@@ -451,16 +448,6 @@ while True:
         break
     except ValueError:
         print 'error connecting to INCF'
-"""
-print '**********************************************************'
-print '**********************************************************'
-print '**********************************************************'
-print '**********************************************************'
-print '**********************************************************'
-print '**********************************************************'
-print '**********************************************************'
-print '**********************************************************'
-xnat = XNAT('christian', 'tImWqtPo')
 
 print
 print 'Each session will need a project, subject, and session label on the '
@@ -496,7 +483,7 @@ for patient_id in sorted(dicom_files):
             print '%s exists but you don\'t have permission to upload to it.' % project
             project = None
             continue
-        if identifier_is_valid(project):
+        if not identifier_is_valid(project):
             print 'Project names can only contain alphanumeric characters and underscores.'
             project = None
             continue
@@ -518,7 +505,7 @@ for patient_id in sorted(dicom_files):
         subject = raw_input('Subject: ')
         if not subject:
             continue
-        if identifier_is_valid(subject):
+        if not identifier_is_valid(subject):
             print 'Subject identifiers can only contain alphanumeric characters and underscores.'
             subject = None
             continue
@@ -572,7 +559,7 @@ print 'Uploading...'
 print
 
 #############################################################################
-# prepare and upload
+# prepare and push DICOM files
 #
 
 session_number = 0
@@ -580,49 +567,80 @@ for patient_id in sorted(dicom_files):
     ps = patient_studies(dicom_files, studies, patient_id)
     for(date_time, study_instance_uid) in ps:
         session_number += 1
-
-session_number, n_sessions
-'Subject %s: %s -> %s %s' % (subject_number, patient_id, xnat_projects[patient_id], xnat_subjects[patient_id])
-xnat_sessions[study_instance_uid]
-
-"""
+        fmt = 'Uploading session %s of %s (%s %s %s)...'
+        print fmt % (session_number, 
+                     n_sessions, 
+                     xnat_projects[patient_id], 
+                     xnat_subjects[patient_id], 
+                     xnat_sessions[study_instance_uid])
+        print
         tempdir = tempfile.mkdtemp()
+        staged_files = []
         try:
             fnames = dicom_files[patient_id][study_instance_uid]
             for (i, fname) in enumerate(fnames):
-                print 'preparing session %d/%d, file %d/%d' % (session_number, 
-                                                               n_sessions, 
-                                                               i, 
-                                                               len(fnames))
+                print '    preparing file %d of %d' % (i+1, len(fnames))
                 do = read_dicom_file(fname)
-                do.StudyComments = 'incf:%s' % user
-                do.PatientsName = subject
+                study_comments = 'incf 2\n'
+                study_comments += 'upload_agreement signed\n'
+                study_comments += 'user %s\n' % user_name
+                study_comments += 'project %s' % xnat_projects[patient_id]
+                do.StudyComments = study_comments
+                do.PatientName = subject
                 do.PatientID = session
                 for name in ('SOPInstanceUID', 
                              'StudyInstanceUID', 
                              'SeriesInstanceUID', 
-                             'FrameofReferenceUID'):
-                try:
-                    el = do.data_element(name)
-                except KeyError:
-                    pass
-                else:
-                    if el is not None:
-                        do.data_element(name).value = new_uid(el.value)
-                    for tag in deident_tags:
-                        if tag in do:
-                            del do[tag]
+                             'FrameOfReferenceUID'):
+                    try:
+                        el = do.data_element(name)
+                    except KeyError:
+                        pass
+                    else:
+                        if el is not None:
+                            do.data_element(name).value = new_uid(el.value)
+                for tag in deident_tags:
+                    if tag in do:
+                        del do[tag]
                 out_fname = '%s/%08d' % (tempdir, i)
-        i += 1
-        dicom.write_file(out_fname, do)
-        staged_files.append(out_fname)
+                dicom.write_file(out_fname, do)
+                staged_files.append(out_fname)
+            print
+            # calculate the number of pushes (split into batches of some 
+            # manageable number of files each)
+            n_pushes = len(staged_files) / files_per_push
+            if len(staged_files) % files_per_push:
+                n_pushes += 1
+            i = 0
+            while staged_files:
+                i += 1
+                print '    push %d of %d...' % (i, n_pushes)
+                args = ['storescu', 
+                        '-aec', 
+                        'XNAT', 
+                        server_configuration['push_host'], 
+                        server_configuration['push_port']]
+                args.extend(staged_files[:files_per_push])
+                rv = subprocess.call(args)
+                if rv != 0:
+                    sys.stderr.write('\n')
+                    sys.stderr.write('%s: error in push; bailing out\n' % progname)
+                    sys.stderr.write('it\'s likely that your data upload is partial and incomplete\n')
+                    sys.stderr.write('please make a note of your subject and session names and contact \n')
+                    sys.stderr.write('xnat-admin@incf.org for assistance\n')
+                    sys.stderr.write('\n')
+                    sys.exit(1)
+                staged_files = staged_files[files_per_push:]
+            print
         finally:
             shutil.rmtree(tempdir)
-"""
 
 #############################################################################
 # clean up and exit
 #
+
+print 'done!'
+print
 
 xnat.close()
 
