@@ -544,7 +544,6 @@ for patient_id in sorted(dicom_files):
             for s in xnat.sessions(project):
                 print '    %s' % s
         print
-        print 'Session identifiers can only contain alphanumeric characters and underscores.'
         session = None
         while not session:
             session = raw_input('Session: ')
