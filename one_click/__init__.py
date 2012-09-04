@@ -16,8 +16,8 @@ import jinja2
 import dicom
 
 auth = open('/home/ch/.xnat_pw').read().strip().encode('base64').strip()
-host = 'xnat.incf.org'
-mail_host = 'smtp.incf.org'
+host = 'localhost'
+mail_host = 'localhost'
 admin_email = 'xnat-admin@incf.org'
 deleted_dir = '/data/cache/DELETED'
 
@@ -58,6 +58,33 @@ class RequestError(PrearchiveError):
     def __str__(self):
         return 'RequestError: %d %s' % (self.response.status, \
                                         self.response.reason)
+
+class StudyCommentsError(Exception):
+    """bad study comments"""
+
+    def __init__(self, msg):
+        self.msg = msg
+        return
+
+    def __str__(self):
+        return self.msg
+
+def parse_study_comments(session):
+    info = {}
+    if session.study_comments is None:
+        raise StudyCommentsError('no study comments')
+    # check for the one protocol we know how to parse
+    if session.study_comments.split('\n')[0] != 'incf 2':
+        raise StudyCommentsError('bad protocol line')
+    for line in session.study_comments.split('\n'):
+        (key, value) = line.split(' ', 1)
+        info[key] = value
+    for key in ('upload_agreement', 'user', 'project'):
+        if key not in info:
+            raise StudyCommentsError('missing required key %s' % key)
+    if info['upload_agreement'] != 'signed':
+        raise StudyCommentsError('missing signed upload agreement')
+    return info
 
 def send_mail(to_addrs, subject, body):
     if not isinstance(to_addrs, (tuple, list)):
@@ -276,7 +303,7 @@ class Session:
 
     def archive(self):
         """archive a session"""
-        body = urllib.urlencode({'src': self.url})
+        body = urllib.urlencode({'src': self.url, 'overwrite': 'append'})
         request('POST', '/data/services/archive', body)
         return
 
