@@ -39,6 +39,16 @@ class InvalidDicomError(Exception):
     doesn't have DICM at byte 128.
     """
 
+class ServerConfigurationError(Exception):
+    """error in server configuration"""
+
+    def __init__(self, msg):
+        self.msg = msg
+        return
+
+    def __str__(self):
+        return msg
+
 class RequestError(Exception):
     """error in an HTTP request"""
 
@@ -53,10 +63,11 @@ class RequestError(Exception):
 
 class XNAT:
 
-    def __init__(self, user_name, password):
+    def __init__(self, base_url, user_name, password):
+        self.base_url = base_url
         h = httplib2.Http()
         h.add_credentials(user_name, password)
-        url = '%s/data/JSESSION' % base_url
+        url = '%s/data/JSESSION' % self.base_url
         (response, content) = h.request(url)
         if response['status'] != '200':
             raise ValueError
@@ -71,7 +82,7 @@ class XNAT:
         return
 
     def _request(self, url, method='GET', expected_status='200'):
-        full_url = '%s/data%s' % (base_url, url)
+        full_url = '%s/data%s' % (self.base_url, url)
         h = httplib2.Http()
         headers = {'Cookie': self.jsession_cookie}
         (response, content) = h.request(full_url, method, headers=headers)
@@ -220,6 +231,27 @@ def identifier_is_valid(identifier):
             return False
     return True
 
+def parse_server_configuration(data):
+    conf = {}
+    # header -- conf version 1 is text key/value (the only thing we handle here)
+    if data.split('\n')[0] != 'conf 1':
+        raise ServerConfigurationError('can\'t parse server configuration')
+    for line in data.split('\n')[1:]:
+        if not line:
+            continue
+        (key, value) = line.split(' ', 1)
+        if key == 'client_protocol':
+            conf.setdefault(key, []).append(value)
+        elif key == 'xnat_base':
+            conf['xnat_base'] = value
+        else:
+            conf.setdefault(key, []).append(value)
+    if 'client_protocol' not in conf:
+        raise KeyError('client_protocol')
+    if 'xnat_base' not in conf:
+        raise KeyError('xnat_base')
+    return conf
+
 #############################################################################
 # defaults and definitions
 #
@@ -234,7 +266,12 @@ except:
     have_storescu = False
 else:
     have_storescu = True
-"""
+
+usage = 'usage: %prog ...'
+description = """Do something.
+
+Like this.
+
     if not have_storescu:
         print 'WARNING: storescu (the program used to send data to the server) '
         print 'was not found on your system.  Please install DCMTK (or adjust '
@@ -242,14 +279,7 @@ else:
         print
 """
 
-usage = 'usage: %prog ...'
-description = """Do something.
-
-Like this.
-"""
-
-base_url = 'http://xnat.incf.org/xnat/'
-base_url = base_url.rstrip('/')
+conf_url = 'http://localhost/conf.txt'
 
 deident_tags = [(0x0008, 0x0050), # Accession Number
                 (0x0008, 0x0080), # InstitutionName
@@ -293,6 +323,32 @@ if not args:
 #############################################################################
 # begin execution
 #
+
+#----------------------------------------------------------------------------
+# read the server configuration and check that the server supports the way 
+# we're doing things here
+#
+
+try:
+    h = httplib2.Http()
+    (response, content) = h.request(conf_url)
+    if response['status'] != '200':
+        msg = 'configuration response status was %s' % response['status']
+        raise ValueError(msg)
+    server_configuration = parse_server_configuration(content)
+except:
+    raise
+    sys.stderr.write('%s: error in server configuation\n' % progname)
+    sys.stderr.write('please contact xnat-admin@incf.org for assistance\n')
+    sys.exit(1)
+
+if '5' not in server_configuration['client_protocol']:
+    sys.stderr.write('%s: server configuration error\n' % progname)
+    sys.stderr.write('\n')
+    sys.stderr.write('The INCF server does not support the protocol used in this program.  Please \n')
+    sys.stderr.write('update this program (updates are available at xnat.incf.org).\n')
+    sys.stderr.write('\n')
+    sys.exit(1)
 
 #----------------------------------------------------------------------------
 # upload agreement
@@ -391,7 +447,7 @@ while True:
     while not password:
         password = getpass.getpass('INCF password: ')
     try:
-        xnat = XNAT(user_name, password)
+        xnat = XNAT(server_configuration['xnat_base'], user_name, password)
         break
     except ValueError:
         print 'error connecting to INCF'
