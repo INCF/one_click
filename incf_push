@@ -61,6 +61,7 @@ class XNAT:
         if 'set-cookie' not in response:
             raise ValueError
         self.jsession_cookie = response['set-cookie'].split(';')[0]
+        print self.jsession_cookie
         self.user_name = user_name
         self._projects = None
         self._user_projects = None
@@ -317,6 +318,7 @@ else:
 
 if not args:
     sys.stderr.write('%s: no sources given\n' % progname)
+    sys.stderr.write('run %s -h for help\n' % progname)
     sys.exit(1)
 
 #############################################################################
@@ -491,14 +493,19 @@ for patient_id in sorted(dicom_files):
     xnat_projects[patient_id] = project
     print
     if not xnat.subjects(project):
-        print 'Now choose an identifier for this subject on the INCF server.  There are no subjects in this project, so this will create a new one.  Subject identifiers can only contain alphanumeric characters and underscores.'
+        print 'Now choose an identifier for this subject on the INCF server.  There are '
+        print 'no subjects in this project, so this will create a new one.  Subject '
+        print 'identifiers can only contain alphanumeric characters and underscores.'
     else:
         print 'The existing subjects for this project are:'
         print
         for subject in xnat.subjects(project):
             print '    %s' % subject
         print
-        print 'Now choose an identifier for this subject on the INCF server.  You can choose an existing subject or create a new subject by entering a new subject identifier.  Subject identifiers can only contain alphanumeric characters and underscores.'
+        print 'Now choose an identifier for this subject on the INCF server.  You can '
+        print 'choose an existing subject or create a new subject by entering a new '
+        print 'subject identifier.  Subject identifiers can only contain alphanumeric '
+        print 'characters and underscores.'
     print
     subject = None
     while not subject:
@@ -527,14 +534,16 @@ for patient_id in sorted(dicom_files):
                                                                 date_time_fmt)
         print
         if not xnat.sessions(project):
-            print 'Choose a session identifier.  There are currently no sessions for this project.  Session identifiers can only contain alphanumeric characters and underscores.'
+            print 'Choose a session identifier.  There are currently no sessions '
+            print 'for this project.  Session identifiers can only contain alphanumeric '
+            print 'characters and underscores.'
         else:
-            print 'Choose a session identifier.  It must be unique for this project, so cannot take any of the following (existing) values:'
+            print 'Choose a session identifier.  It must be unique for this project, '
+            print 'so cannot take any of the following (existing) values:'
             print
             for s in xnat.sessions(project):
                 print '    %s' % s
         print
-        print 'Session identifiers can only contain alphanumeric characters and underscores.'
         session = None
         while not session:
             session = raw_input('Session: ')
