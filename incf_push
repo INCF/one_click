@@ -586,8 +586,8 @@ for patient_id in sorted(dicom_files):
                 study_comments += 'user %s\n' % user_name
                 study_comments += 'project %s' % xnat_projects[patient_id]
                 do.StudyComments = study_comments
-                do.PatientName = subject
-                do.PatientID = session
+                do.PatientName = xnat_subjects[patient_id]
+                do.PatientID = xnat_sessions[study_instance_uid]
                 for name in ('SOPInstanceUID', 
                              'StudyInstanceUID', 
                              'SeriesInstanceUID', 
