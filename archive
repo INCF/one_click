@@ -29,7 +29,9 @@ session = one_click.Session(sys.argv[1])
 print 'got session %s' % str(session)
 
 try:
-    upload_info = one_click.parse_study_comments(session)
+    if session.study_comments is None:
+        raise one_click.StudyCommentsError('no study comments')
+    upload_info = one_click.parse_study_comments(session.study_comments)
 except one_click.StudyCommentsError, data:
     print 'study comments error: %s' % str(data)
     handle_bad_study_comments(session, str(data))

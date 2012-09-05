@@ -69,14 +69,12 @@ class StudyCommentsError(Exception):
     def __str__(self):
         return self.msg
 
-def parse_study_comments(session):
+def parse_study_comments(study_comments):
     info = {}
-    if session.study_comments is None:
-        raise StudyCommentsError('no study comments')
     # check for the one protocol we know how to parse
-    if session.study_comments.split('\n')[0] != 'incf 2':
+    if study_comments.split('\n')[0] != 'incf 2':
         raise StudyCommentsError('bad protocol line')
-    for line in session.study_comments.split('\n'):
+    for line in study_comments.split('\n'):
         (key, value) = line.split(' ', 1)
         info[key] = value
     for key in ('upload_agreement', 'user', 'project'):
