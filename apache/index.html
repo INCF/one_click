@@ -24,9 +24,8 @@
         <ul>
             <li><a href="incf_push">incf_push</a></li>
             <li><a href="http://code.google.com/p/pydicom/">pydicom</a></li>
+            <li><a href="http://code.google.com/p/httplib2/">httplib2</a></li>
             <li><a href="http://dicom.offis.de/dcmtk">DCMTK</a></li>
-            <li><a href="http://nrg.wustl.edu/software/dicom-browser/">DICOM Browser</a></li>
-            <li><a href="one_click.das">Anonymization script</a></li>
         </ul>
     </li>
     <li>Contact
@@ -50,53 +49,13 @@ This instance of XNAT has been modified to run quality assessment tools on uploa
 <h2>That sounds great!  How do I do it?</h2>
 
 <p>
-First <a href="http://www.incf.org/register">create an account</a> for yourself on <a href="http://www.incf.org/">the INCF portal</a>.  Modify your DICOM data so the Study Comments attribute (0032, 4000) reads "incf:<em>yourportalusername</em>," the Patient Name attribute (0010, 0010) contains the name of the subject as you want it to appear on the database, and the Patient ID attribute (0010, 0020) contains the session name.  You'll also have to remove the identifiable attributes listed below.
+First <a href="http://www.incf.org/register">create an account</a> for yourself on <a href="http://www.incf.org/">the INCF portal</a>.  Then download one of the upload tools to the left (currently only incf_push) and use it to upload your data.
 </p>
 
-<p>
-Then push DICOM data to the server at xnat.incf.org, port 104, with the called AE title "XNAT."
-</p>
-
-<h2>That sounds hard.</h2>
+<h2>That was easy.  Now what?</h2>
 
 <p>
-Let's make it easier.
-</p>
-
-<p>
-You'll still need <a href="http://www.incf.org/register">an account</a> on <a href="http://www.incf.org/">the INCF portal</a>.
-</p>
-
-<p>
-You can use a script to do most of the work for you.  Download our <a href="incf_push">script</a> (which requires <a href="http://code.google.com/p/pydicom/">pydicom</a> and <a href="http://dicom.offis.de/dcmtk">DCMTK</a>), and with one quick command line call, everything is done for you.  Run incf_push with no arguments for usage.
-</p>
-
-<p>
-Or you can use a tool like <a href="http://nrg.wustl.edu/software/dicom-browser/">DICOM Browser</a>.  Open your data in DICOM Browser, then:
-</p>
-
-<ul>
-<li>Apply <a href="one_click.das">the one-click anonymization script</a>.</li>
-<li>Change:
-    <ul>
-        <li class="first">(0032, 4000) to "incf:<em>yourportalusername</em>" (Study Comments)</li>
-        <li>(0010, 0010) to the name of the subject as you want it to appear in the database (Patient Name)</li>
-        <li>(0010, 0020) to the name of the session as you want it to appear in the database (Patient ID)</li>
-    </ul>
-</li>
-<li>Then send the using the following parameters (you can pick your own local AE title):
-    <ul>
-        <li class="first">Remote host: xnat.incf.org</li>
-        <li>Port: 104</li>
-        <li>Remote AE Title: XNAT</li>
-    </ul>
-</li>
-</ul>
-
-<h2>That <em>was</em> easy.  Now what?</h2>
-
-<p>
-The server will process your data and send you the results.  If you made a mistake in the study comments ("incf:<em>yourportalusername</em>"), we'll have no way of knowing the data came from you and can't contact you.  Otherwise, expect an e-mail in about an hour containing the <a href="http://www.nitrc.org/projects/bxh_xcede_tools/">BIRN QA</a> results on any time series data you sent.
+The server will process your data and send you notification when processing is complete.  You can then see <a href="http://www.nitrc.org/projects/bxh_xcede_tools/">BIRN QA</a> results on any time series data you sent and basic structural QA on structural data.
 </p>
 
 <p>
