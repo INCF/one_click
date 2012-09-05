@@ -46,8 +46,15 @@ $page.setVlinkColor($ui.vlink)
     </TR>
     <TR>
         <TD>
+<p>
+This time-series quality assessment is the result of a <a href="https://www.nitrc.org/projects/bxh_xcede_tools">BXH/XCEDE Tools</a> analysis.  <code>dicom2bxh --xcede</code> is run on the DICOM data to create an XCEDE wrapper, after which <code>fmriqa_generate.pl</code> is run.
+</p>
+        </TD>
+    </TR>
+    <TR>
+        <TD>
 <!-- BEGIN incf:BIRNfMRIQAData -->
-            <TABLE>
+            <TABLE border="1">
                 <TR>
                     <TD align="left" valign="top" rowspan="7">input</TD>
                     <TD align="left" valign="top"># potentially clipped voxels</TD>
@@ -134,7 +141,14 @@ $page.setVlinkColor($ui.vlink)
                 </TR>
             </TABLE>
 
-Mean intensity per volume (what's this?)
+<br/>
+<font face="$ui.sansSerifFonts" size="2"><b>Volume means (input)</b></font>
+<br/>
+<br/>
+This metric tracks the mean intensity of each volume (time point) in the data. Increases and decreases in overall brain activity will be reflected in this plot. RF spikes and other acquisition artifacts may be visible here (esp. if they affect an entire volume).
+<br/>
+<font face="$ui.sansSerifFonts" size="1"><b>Mean intensity per volume</b></font>
+<br/>
             <TABLE>
                 <TR>
                     <TD align="left" valign="top">absolute</TD>
@@ -148,9 +162,16 @@ Mean intensity per volume (what's this?)
 
 <IMG SRC="$resource_path/qa_volmeans_allnorm.png" />
 <IMG SRC="$resource_path/qa_volmeans_all.png" />
-<IMG SRC="$resource_path/qa_volmeans_$!{item.getStringProperty("incf:BIRNfMRIQAData/source_scan")}.xcede_histo.png" />
+<IMG SRC="$resource_path/qa_volmeans_all_histo.png" />
 
-Volume means (masked, detrended) (what's this?)
+<br/>
+<font face="$ui.sansSerifFonts" size="2"><b>Volume means (masked, detrended)</b></font>
+<br/>
+<br/>
+This metric tracks the mean intensity of each volume (time point) in the data. Increases and decreases in overall brain activity will be reflected in this plot. RF spikes and other acquisition artifacts may be visible here (esp. if they affect an entire volume).  "Masked, detrended" means that this the volume means metric applied to masked and detrended data.
+<br/>
+<font face="$ui.sansSerifFonts" size="1"><b>Mean intensity per volume</b></font>
+<br/>
             <TABLE>
                 <TR>
                     <TD align="left" valign="top">absolute</TD>
@@ -166,7 +187,14 @@ Volume means (masked, detrended) (what's this?)
 <IMG SRC="$resource_path/qa_maskedvolmeans_all.png" />
 <IMG SRC="$resource_path/qa_maskedvolmeans_all_histo.png" />
 
-Means of mean volume difference (what's this?)
+<br/>
+<font face="$ui.sansSerifFonts" size="2"><b>Means of mean volume difference</b></font>
+<br/>
+<br/>
+For each volume vol and a mean volume meanvol, this metric tracks the mean intensity of (vol - meanvol). Slow drifts in the input data will be apparent in this plot.
+<br/>
+<font face="$ui.sansSerifFonts" size="1"><b>Means of mean volume difference</b></font>
+<br/>
             <TABLE>
                 <TR>
                     <TD align="left" valign="top">absolute</TD>
@@ -182,7 +210,15 @@ Means of mean volume difference (what's this?)
 <IMG SRC="$resource_path/qa_mdiffvolmeans_all.png" />
 <IMG SRC="$resource_path/qa_mdiffvolmeans_all_histo.png" />
 
-Running difference ("velocity") volume means (masked, detrended) (what's this?)
+<br/>
+<font face="$ui.sansSerifFonts" size="2"><b>Running difference ("velocity") volume means (w/ mask,detrend):</b></font>
+<br/>
+<br/>
+This metric tracks the change in the mean intensity of consecutive volumes by subtracting the mean intensity of each volume from the mean intensity of its subsequent volume.
+<br/>
+<font face="$ui.sansSerifFonts" size="1"><b>Mean of running difference per volume (w/mask, detrended)</b></font>
+<br/>
+
             <TABLE>
                 <TR>
                     <TD align="left" valign="top">absolute</TD>
@@ -198,7 +234,15 @@ Running difference ("velocity") volume means (masked, detrended) (what's this?)
 <IMG SRC="$resource_path/qa_maskedtdiffvolmeans_all.png" />
 <IMG SRC="$resource_path/qa_maskedtdiffvolmeans_all_histo.png" />
 
-Outlier voxel percentages (from AFNI's 3dToutcount) (masked, detrended) (what's this?)
+<br/>
+<font face="$ui.sansSerifFonts" size="2"><b>Outlier voxel percentages (from AFNI's 3dToutcount) (masked, detrended)</b></font>
+<br/>
+<br/>
+This metric is calculated by running the detrended data through the AFNI program 3dToutcount. This metric shows the percentage of "outlier" voxels in each volume. For a definition of "outlier", see the documentation for 3dToutcount on the AFNI web site, or run 3dToutcount without arguments.
+<br/>
+<font face="$ui.sansSerifFonts" size="1"><b>Percent of outlier voxels</b></font>
+<br/>
+
             <TABLE>
                 <TR>
                     <TD align="left" valign="top">absolute</TD>
@@ -213,7 +257,15 @@ Outlier voxel percentages (from AFNI's 3dToutcount) (masked, detrended) (what's 
 <IMG SRC="$resource_path/qa_outliercount_all.png" />
 <IMG SRC="$resource_path/qa_outliercount_all_histo.png" />
 
-FWHM in X dimension (from AFNI's 3dFWHMx) (masked) (what's this?)
+<br/>
+<font face="$ui.sansSerifFonts" size="2"><b>FWHM in X dimension (from AFNI's 3dFWHMx) (masked)</b></font>
+<br/>
+<br/>
+This metric shows the estimated FWHM for each volume in X, Y, or Z directions, used as a measure of the "smoothness" of the data.
+<br/>
+<font face="$ui.sansSerifFonts" size="1"><b>Full-width half maximum in X dimension</b></font>
+<br/>
+
             <TABLE>
                 <TR>
                     <TD align="left" valign="top">absolute</TD>
@@ -228,7 +280,15 @@ FWHM in X dimension (from AFNI's 3dFWHMx) (masked) (what's this?)
 <IMG SRC="$resource_path/qa_FWHMx-X_all.png" />
 <IMG SRC="$resource_path/qa_FWHMx-X_all_histo.png" />
 
-FWHM in Y dimension (from AFNI's 3dFWHMx) (masked) (what's this?)
+<br/>
+<font face="$ui.sansSerifFonts" size="2"><b>FWHM in Y dimension (from AFNI's 3dFWHMx) (masked)</b></font>
+<br/>
+<br/>
+This metric shows the estimated FWHM for each volume in X, Y, or Z directions, used as a measure of the "smoothness" of the data.
+<br/>
+<font face="$ui.sansSerifFonts" size="1"><b>Full-width half maximum in Y dimension</b></font>
+<br/>
+
             <TABLE>
                 <TR>
                     <TD align="left" valign="top">absolute</TD>
@@ -243,7 +303,15 @@ FWHM in Y dimension (from AFNI's 3dFWHMx) (masked) (what's this?)
 <IMG SRC="$resource_path/qa_FWHMx-Y_all.png" />
 <IMG SRC="$resource_path/qa_FWHMx-Y_all_histo.png" />
 
-FWHM in Z dimension (from AFNI's 3dFWHMx) (masked) (what's this?)
+<br/>
+<font face="$ui.sansSerifFonts" size="2"><b>FWHM in Z dimension (from AFNI's 3dFWHMx) (masked)</b></font>
+<br/>
+<br/>
+This metric shows the estimated FWHM for each volume in X, Y, or Z directions, used as a measure of the "smoothness" of the data.
+<br/>
+<font face="$ui.sansSerifFonts" size="1"><b>Full-width half maximum in Z dimension</b></font>
+<br/>
+
             <TABLE>
                 <TR>
                     <TD align="left" valign="top">absolute</TD>
@@ -258,7 +326,17 @@ FWHM in Z dimension (from AFNI's 3dFWHMx) (masked) (what's this?)
 <IMG SRC="$resource_path/qa_FWHMx-Z_all.png" />
 <IMG SRC="$resource_path/qa_FWHMx-Z_all_histo.png" />
 
-Center of mass (X) (input) (what's this?)
+<br/>
+<font face="$ui.sansSerifFonts" size="2"><b>Center of mass (X) (input)</b></font>
+<br/>
+<br/>
+This metric is calculated as a weighted average of voxel intensities, where each voxel is weighted by its coordinate index in the X, Y, or Z direction. Head motion in each of the three directions may be reflected as a change in this metric.
+<br/>
+<font face="$ui.sansSerifFonts" size="1"><b>
+Center of Mass (X) by volume
+</b></font>
+<br/>
+
             <TABLE>
                 <TR>
                     <TD align="left" valign="top">absolute</TD>
@@ -274,7 +352,19 @@ Center of mass (X) (input) (what's this?)
 <IMG SRC="$resource_path/qa_cmassx_all.png" />
 <IMG SRC="$resource_path/qa_cmassx_all_histo.png" />
 
-Center of mass (X) (masked, detrended) (what's this?)
+<br/>
+<font face="$ui.sansSerifFonts" size="2"><b>Center of mass (X) (masked, detrended)</b></font>
+<br/>
+<br/>
+Masked, detrended center of mass: this is the center of mass metric applied to masked and detrended data. Thus this metric will be insensitive to noise outside the mask.
+<br/>
+Center of mass: this metric is calculated as a weighted average of voxel intensities, where each voxel is weighted by its coordinate index in the X, Y, or Z direction. Head motion in each of the three directions may be reflected as a change in this metric.
+<br/>
+<font face="$ui.sansSerifFonts" size="1"><b>
+Center of Mass (Y) by volume
+</b></font>
+<br/>
+
             <TABLE>
                 <TR>
                     <TD align="left" valign="top">absolute</TD>
@@ -290,7 +380,15 @@ Center of mass (X) (masked, detrended) (what's this?)
 <IMG SRC="$resource_path/qa_maskedcmassx_all.png" />
 <IMG SRC="$resource_path/qa_maskedcmassx_all_histo.png" />
 
-Center of mass (Y) (input) (what's this?)
+<br/>
+<font face="$ui.sansSerifFonts" size="2"><b>Center of mass (Y) (input)</b></font>
+<br/>
+<br/>
+This metric is calculated as a weighted average of voxel intensities, where each voxel is weighted by its coordinate index in the X, Y, or Z direction. Head motion in each of the three directions may be reflected as a change in this metric.
+<br/>
+<font face="$ui.sansSerifFonts" size="1"><b>Center of Mass (Y) by volume</b></font>
+<br/>
+
             <TABLE>
                 <TR>
                     <TD align="left" valign="top">absolute</TD>
@@ -306,7 +404,17 @@ Center of mass (Y) (input) (what's this?)
 <IMG SRC="$resource_path/qa_cmassy_all.png" />
 <IMG SRC="$resource_path/qa_cmassy_all_histo.png" />
 
-Center of mass (Y) (masked, detrended) (what's this?)
+<br/>
+<font face="$ui.sansSerifFonts" size="2"><b>Center of mass (Y) (masked, detrended)</b></font>
+<br/>
+<br/>
+Masked, detrended center of mass: this is the center of mass metric applied to masked and detrended data. Thus this metric will be insensitive to noise outside the mask.
+<br/>
+Center of mass: this metric is calculated as a weighted average of voxel intensities, where each voxel is weighted by its coordinate index in the X, Y, or Z direction. Head motion in each of the three directions may be reflected as a change in this metric.
+<br/>
+<font face="$ui.sansSerifFonts" size="1"><b>Center of Mass (Y) by volume</b></font>
+<br/>
+
             <TABLE>
                 <TR>
                     <TD align="left" valign="top">absolute</TD>
@@ -322,7 +430,15 @@ Center of mass (Y) (masked, detrended) (what's this?)
 <IMG SRC="$resource_path/qa_maskedcmassy_all.png" />
 <IMG SRC="$resource_path/qa_maskedcmassy_all_histo.png" />
 
-Center of mass (Z) (input) (what's this?)
+<br/>
+<font face="$ui.sansSerifFonts" size="2"><b>Center of mass (Z) (input)</b></font>
+<br/>
+<br/>
+This metric is calculated as a weighted average of voxel intensities, where each voxel is weighted by its coordinate index in the X, Y, or Z direction. Head motion in each of the three directions may be reflected as a change in this metric.
+<br/>
+<font face="$ui.sansSerifFonts" size="1"><b>Center of Mass (Z) by volume</b></font>
+<br/>
+
             <TABLE>
                 <TR>
                     <TD align="left" valign="top">absolute</TD>
@@ -338,7 +454,17 @@ Center of mass (Z) (input) (what's this?)
 <IMG SRC="$resource_path/qa_cmassz_all.png" />
 <IMG SRC="$resource_path/qa_cmassz_all_histo.png" />
 
-Center of mass (Z) (masked, detrended) (what's this?)
+<br/>
+<font face="$ui.sansSerifFonts" size="2"><b>Center of mass (Z) (masked, detrended)</b></font>
+<br/>
+<br/>
+Masked, detrended center of mass: this is the center of mass metric applied to masked and detrended data. Thus this metric will be insensitive to noise outside the mask.
+<br/>
+Center of mass: this metric is calculated as a weighted average of voxel intensities, where each voxel is weighted by its coordinate index in the X, Y, or Z direction. Head motion in each of the three directions may be reflected as a change in this metric.
+<br/>
+<font face="$ui.sansSerifFonts" size="1"><b>Center of Mass (Z) by volume</b></font>
+<br/>
+
             <TABLE>
                 <TR>
                     <TD align="left" valign="top">absolute</TD>
@@ -363,7 +489,15 @@ Center of mass (Z) (masked, detrended) (what's this?)
 
 
 
-Frequency spectrum (mean over mask) (masked, detrended) (what's this?)
+<br/>
+<font face="$ui.sansSerifFonts" size="2"><b>Frequency spectrum (mean over mask) (masked, detrended)</b></font>
+<br/>
+<br/>
+A frequency spectrum is calculated for each voxel in the mask and this plot shows the mean power for each frequency across all voxels.
+<br/>
+<font face="$ui.sansSerifFonts" size="1"><b>Mean (over ROI) spectrum</b></font>
+<br/>
+
             <TABLE>
                 <TR>
                     <TD align="left" valign="top">absolute</TD>
@@ -378,7 +512,15 @@ Frequency spectrum (mean over mask) (masked, detrended) (what's this?)
 <IMG SRC="$resource_path/qa_spectrummean_all.png" />
 <IMG SRC="$resource_path/qa_spectrummean_all_histo.png" />
 
-Frequency spectrum (max over mask) (masked, detrended) (what's this?)
+<br/>
+<font face="$ui.sansSerifFonts" size="2"><b>Frequency spectrum (max over mask) (masked, detrended)</b></font>
+<br/>
+<br/>
+A frequency spectrum is calculated for each voxel in the mask and this plot shows the maximum power for each frequency across all voxels.
+<br/>
+<font face="$ui.sansSerifFonts" size="1"><b>Max (over ROI) spectrum</b></font>
+<br/>
+
             <TABLE>
                 <TR>
                     <TD align="left" valign="top">absolute</TD>
