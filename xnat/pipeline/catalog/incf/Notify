@@ -2,6 +2,9 @@
 
 import sys
 import os
+import jinja2
+import dicom
+import pyxnat
 import one_click
 
 progname = os.path.basename(sys.argv.pop(0))
@@ -9,9 +12,9 @@ version = '1.0'
 
 if len(sys.argv) == 0:
     print
-    print 'usage: $progname <args>'
+    print 'usage: %s <args>' % progname
     print
-    print 'arguments (all required) are:'
+    print 'arguments (all are required) are:'
     print
     print '    -host <XNAT base URL>'
     print '    -u <XNAT user name>'
@@ -46,6 +49,8 @@ while sys.argv:
         sys.exit(1)
     args[arg] = sys.argv.pop(0)
 
+print args
+
 for arg in arg_keys:
     if arg not in args:
         sys.stderr.write('%s: missing required argument "-%s"\n' % (progname, 
@@ -53,7 +58,50 @@ for arg in arg_keys:
         sys.stderr.write('run %s with no arguments for usage\n' % progname)
         sys.exit(1)
 
-print args
+# try to find a DICOM file with the uploading user noted
+user = None
+session_dir = '/data/archive/%s/arc001/%s/SCANS' % (args['project'], 
+                                                    args['xnatId'])
+for subdir in os.listdir(session_dir):
+    dicom_dir = '%s/%s/DICOM' % (session_dir, subdir)
+    if not os.path.isdir(dicom_dir):
+        continue
+    for fname in os.listdir(dicom_dir):
+        try:
+            do = dicom.read_file('%s/%s' % (dicom_dir, fname))
+            info = one_click.parse_study_comments(do.StudyComments)
+        except:
+            continue
+        user = info['user']
+        break
+    if user:
+        break
+
+interface = pyxnat.Interface(args['host'], args['u'], args['pwd'])
+
+if not user:
+    project = interface.select.project(args['project'])
+    users = []
+    for u in project.users():
+        if project.user_role(u) == 'owner':
+            users.append(u)
+    if not users:
+        msg = '%s: no owners found for project %s\n' % (project, 
+                                                        args['project'])
+        sys.stderr.write(msg)
+        sys.exit(1)
+
+if user:
+    emails = [ interface.manage.users.email(user) ]
+    template_name = 'done.email'
+else:
+    emails = [ interface.manage.users.email(u) for u in users ]
+    template_name = 'done_no_user.email'
+
+template = one_click.template_env.get_template(template_name)
+body = template.render(project=args['project'], session=args['session'])
+subject = 'Data upload to INCF complete'
+one_click.send_mail(emails, subject, body)
 
 sys.exit(0)
 
