@@ -373,18 +373,12 @@ function FileViewer(_obj){
 		  		    	}
 		  		    },this,true);
 
-                    var a = document.createElement("a");
-                    a.setAttribute("href", "/agreements.html");
-                    a.setAttribute("target", "_blank");
-                    a.innerHTML = "Upload agreement";
-					fTd1.appendChild(a);
-
 				}
 							
                 var a = document.createElement("a");
                 a.setAttribute("href", "/agreements.html");
                 a.setAttribute("target", "_blank");
-                a.innerHTML = "Download agreement";
+                a.innerHTML = "Upload/download agreements";
                 fTd1.appendChild(a);
 
 				var dType=document.createElement("select");

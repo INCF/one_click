@@ -161,9 +161,13 @@ function validateForm(){
 
 
 <p>
-INCF download agreement</h3>
-<br/>
-#include("upload_agreement.txt")
+INCF download agreement
+</p>
+<p>
+You must agree to the following terms before downloading:
+</p>
+<p>
+#include("../download_agreement.txt")
 </p>
 
 <DIV class="spacer">&nbsp;</DIV>

@@ -319,6 +319,10 @@ function checkProgress(){
 <h3>INCF upload agreement</h3>
 
 <p>
+You must agree to the following terms to upload to this server:
+</p>
+<br/>
+<p>
 #include("upload_agreement.txt")
 </p>
 

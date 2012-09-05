@@ -60,9 +60,16 @@ $page.setVlinkColor($ui.vlink)
 	</td></tr>
 	<tr><td colspan=2>&nbsp;</td></tr>
 	<tr><td colspan=2>
-    INCF Download Agreement
-    <br/>
-    #include("../download_agreement.txt");
+
+
+INCF download agreement
+<br/>
+You must agree to the following terms before downloading:
+<br/>
+#include("../upload_agreement.txt")
+</p>
+
+
     </td></tr>
 	<tr><td colspan=2>&nbsp;</td></tr>
 	<tr>
