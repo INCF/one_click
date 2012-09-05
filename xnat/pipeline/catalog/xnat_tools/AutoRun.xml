@@ -148,7 +148,7 @@
 	         </resource>
 	</step> 
 	<step id="5" description="Notify"  continueOnFailure="true">
-		<resource name="Nofity" location="incf">
+		<resource name="Notify" location="incf">
 			<argument id="session">
 				<value>^/Pipeline/parameters/parameter[name='sessionLabel']/values/unique/text()^</value>
 			</argument>
