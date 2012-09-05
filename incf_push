@@ -240,6 +240,7 @@ def parse_server_configuration(data):
     (push_host, push_port) = conf['push_target'].split(':')
     conf['push_host'] = push_host
     conf['push_port'] = push_port
+#    conf['push_port'] = '8104'
     return conf
 
 #############################################################################
@@ -299,6 +300,10 @@ deident_tags = [ dicom.tag.Tag(tag) for tag in deident_tags ]
 uids = {}
 
 files_per_push = 500
+
+# comments on performed procedure
+# if present, this can mess up the project change in the prearchive
+copp_tag = dicom.tag.Tag((0x0040, 0x0280))
 
 #############################################################################
 # command line processing
@@ -369,13 +374,12 @@ print
 if response.strip().lower() != 'yes':
     print 'exiting'
     sys.exit(2)
-print
 
 #----------------------------------------------------------------------------
 # scan for DICOM files
 #
 
-print 'scanning for files...'
+print 'Scanning for files...'
 
 all_files = []
 for arg in args:
@@ -388,7 +392,7 @@ for arg in args:
         sys.stderr.write('%s: %s is not a file or directory\n' % (progname, 
                                                                   arg))
 
-print 'reading all files...'
+print 'Reading all files...'
 
 # dicom_files[PatientID][StudyInstanceUID] -> list of file names
 dicom_files = {}
@@ -561,7 +565,6 @@ for patient_id in sorted(dicom_files):
         xnat_sessions[study_instance_uid] = session
         print
 
-print
 print 'That\'s all for now.'
 print
 print 'Uploading...'
@@ -595,12 +598,12 @@ for patient_id in sorted(dicom_files):
                 study_comments += 'user %s\n' % user_name
                 study_comments += 'project %s' % xnat_projects[patient_id]
                 do.StudyComments = study_comments
-                do.PatientName = xnat_subjects[patient_id]
+                do.PatientsName = xnat_subjects[patient_id]
                 do.PatientID = xnat_sessions[study_instance_uid]
                 for name in ('SOPInstanceUID', 
                              'StudyInstanceUID', 
                              'SeriesInstanceUID', 
-                             'FrameOfReferenceUID'):
+                             'FrameofReferenceUID'):
                     try:
                         el = do.data_element(name)
                     except KeyError:
@@ -611,6 +614,8 @@ for patient_id in sorted(dicom_files):
                 for tag in deident_tags:
                     if tag in do:
                         del do[tag]
+                if copp_tag in do:
+                    del do[copp_tag]
                 out_fname = '%s/%08d' % (tempdir, i)
                 dicom.write_file(out_fname, do)
                 staged_files.append(out_fname)
