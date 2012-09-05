@@ -20,7 +20,6 @@ then
 fi
 
 rm -rf /data/cache/DELETED
-/home/ch/one_click/remove_broken_links /var/www/qc || exit 1
 /home/ch/one_click/queue || exit 1
 /home/ch/arc-queue/arc-qrunner || exit 1
 
