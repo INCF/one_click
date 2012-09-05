@@ -115,6 +115,7 @@ def append_stats(doc, root, region, vals):
             'NVoxels', 
             'Volume')
     for (tag, val) in zip(tags, vals.split()):
+        val = '%.2f' % float(val)
         append_text_element(doc, el, tag, val)
     root.appendChild(el)
     return
@@ -196,6 +197,12 @@ with QATemporaryDirectory() as co:
 
         append_text_element(doc, root, 'xnat:imageSession_ID', experiment_id)
         append_text_element(doc, root, 'source_scan', scan.label())
+
+        signal = float(brain_stats.split()[4])
+        noise = float(external_stats.split()[5])
+        if noise != 0.0:
+            snr = signal / noise
+            append_text_element(doc, root, 'SNR', str(snr))
 
         append_stats(doc, root, 'external', external_stats)
         append_stats(doc, root, 'brain', brain_stats)

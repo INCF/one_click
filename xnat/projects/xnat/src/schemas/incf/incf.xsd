@@ -89,6 +89,7 @@
         <xs:complexContent>
             <xs:extension base="incf:BaseQAAssessorData">
                 <xs:sequence>
+                    <xs:element name="SNR" type="xs:float" minOccurs="0" maxOccurs="1"/>
                     <xs:element name="BasicStructuralQAStats" type="incf:BasicStructuralQAStatsData" minOccurs="1" maxOccurs="unbounded"/>
                 </xs:sequence>
             </xs:extension>
