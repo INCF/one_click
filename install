@@ -1,0 +1,11 @@
+#!/bin/sh
+
+set -e
+
+sudo cp -rv one_click /usr/lib/python2.6/dist-packages/.
+sudo cp -v apache/* /var/www/.
+sudo cp -v incf_push /var/www/.
+
+exit 0
+
+# eof
