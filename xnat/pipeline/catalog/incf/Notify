@@ -1,0 +1,60 @@
+#!/usr/bin/python
+
+import sys
+import os
+import one_click
+
+progname = os.path.basename(sys.argv.pop(0))
+version = '1.0'
+
+if len(sys.argv) == 0:
+    print
+    print 'usage: $progname <args>'
+    print
+    print 'arguments (all required) are:'
+    print
+    print '    -host <XNAT base URL>'
+    print '    -u <XNAT user name>'
+    print '    -pwd <XNAT password>'
+    print '    -project <project>'
+    print '    -xnatId <experiment ID>'
+    print '    -session <experiment label>'
+    print
+    sys.exit(1)
+
+if sys.argv[1] == '--version':
+    print '%s %s' % (progname, version)
+    sys.exit(0)
+
+arg_keys = ('host', 'u', 'pwd', 'project', 'xnatId', 'session')
+args = {}
+
+while sys.argv:
+    arg = sys.argv.pop(0)
+    if not arg.startswith('-'):
+        sys.stderr.write('%s: unexpected position argument\n' % progname)
+        sys.stderr.write('run %s with no arguments for usage\n' % progname)
+        sys.exit(1)
+    arg = arg[1:]
+    if arg not in arg_keys:
+        sys.stderr.write('%s: unknown option "-%s"\n' % (progname, arg))
+        sys.stderr.write('run %s with no arguments for usage\n' % progname)
+        sys.exit(1)
+    if not sys.argv:
+        sys.stderr.write('%s: unknown option "-%s"\n' % (progname, arg))
+        sys.stderr.write('run %s with no arguments for usage\n' % progname)
+        sys.exit(1)
+    args[arg] = sys.argv.pop(0)
+
+for arg in arg_keys:
+    if arg not in args:
+        sys.stderr.write('%s: missing required argument "-%s"\n' % (progname, 
+                                                                    arg))
+        sys.stderr.write('run %s with no arguments for usage\n' % progname)
+        sys.exit(1)
+
+print args
+
+sys.exit(0)
+
+# eof
