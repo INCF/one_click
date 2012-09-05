@@ -147,6 +147,28 @@
 				</argument>
 	         </resource>
 	</step> 
+	<step id="5" description="Notify"  continueOnFailure="true">
+		<resource name="Nofity" location="incf">
+			<argument id="session">
+				<value>^/Pipeline/parameters/parameter[name='sessionLabel']/values/unique/text()^</value>
+			</argument>
+			<argument id="xnatId">
+				<value>^/Pipeline/parameters/parameter[name='session']/values/unique/text()^</value>
+			</argument>
+			<argument id="project">
+				<value>^/Pipeline/parameters/parameter[name='xnat_project']/values/unique/text()^</value>
+			</argument>
+			<argument id="host">
+				<value>^if (count(/Pipeline/parameters/parameter[name='aliasHost']/values) > 0) then /Pipeline/parameters/parameter[name='aliasHost']/values/unique/text() else /Pipeline/parameters/parameter[name='host']/values/unique/text()^</value>
+			</argument>
+			<argument id="user">
+				<value>^/Pipeline/parameters/parameter[name='user']/values/unique/text()^</value>
+			</argument>
+			<argument id="pwd">
+				<value>^/Pipeline/parameters/parameter[name='pwd']/values/unique/text()^</value>
+			</argument>
+		</resource>
+	</step> 
 <!--
 		<step id="5" description="Get Email notification list" precondition="^/Pipeline/parameters/parameter[name='emaillistfileExists']/values/unique/text()='true'^">
 			<resource name="XnatRestClient" location="xnat_tools">
