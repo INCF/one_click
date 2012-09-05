@@ -1,0 +1,448 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2//EN">
+$page.setTitle("BasicStructuralQA Details")
+$page.setLinkColor($ui.alink)
+$page.setVlinkColor($ui.vlink)
+#if ($turbineUtils.GetPassedParameter("popup", $data))
+	#set ($popup = $turbineUtils.GetPassedParameter("popup", data) )
+	#set ($popup = "false")
+#end
+<TABLE width="100%">
+	<TR>
+		<TD>
+			<table width="100%">
+				<TR>
+					<TD align="left" valign="middle">
+						<font face="$ui.sansSerifFonts" size="3"><b>BasicStructuralQA Details</b></font>
+					</TD>
+				</TR>
+			</TABLE>
+		</TD>
+	</TR>
+	<TR>
+		<TD>
+			<TABLE width="100%">
+				<TR>
+					<TD valign="top">
+						<TABLE>
+							<TR><TD>imageSession_ID</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/imageSession_ID")</TD></TR>
+							<TR><TD>date</TD><TD>$!item.getProperty("incf:BasicStructuralQAData/date")</TD></TR>
+							<TR><TD>time</TD><TD>$!item.getProperty("incf:BasicStructuralQAData/time")</TD></TR>
+							<TR><TD>duration</TD><TD>$!item.getProperty("incf:BasicStructuralQAData/duration")</TD></TR>
+							<TR><TD>delay</TD><TD>$!item.getIntegerProperty("incf:BasicStructuralQAData/delay")</TD></TR>
+							<TR><TD>delay/ref_expt_id</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/delay/ref_expt_id")</TD></TR>
+							<TR><TD>note</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/note")</TD></TR>
+							<TR><TD>acquisition_site</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/acquisition_site")</TD></TR>
+							<TR><TD>ID</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/ID")</TD></TR>
+							<TR><TD>project</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/project")</TD></TR>
+							<TR><TD>visit_id</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/visit_id")</TD></TR>
+							<TR><TD>label</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/label")</TD></TR>
+						</TABLE>
+					</TD>
+					<TD valign="top" align="right">
+						#elementActionsBox($element $search_field $search_value $data.getSession().getAttribute("user") $item)
+					</TD>
+				</TR>
+			</TABLE>
+		</TD>
+	</TR>
+	<TR>
+		<TD>
+<!-- BEGIN incf:BasicStructuralQAData -->
+			<TABLE>
+				<TR><TH align="left"><font face="$ui.sansSerifFonts" size="2">Related Items</font></TH></TR>
+				<TR>
+					<TD align="left" valign="top">
+						<TABLE>
+						</TABLE>
+					</TD>
+				</TR>
+				<TR>
+					<TD align="left" valign="top">
+						<TABLE><TR><TD>
+							#set($incf_BaseQAAssessorData_source_scan_1_NUM_ROWS=$item.getChildItems("incf:BasicStructuralQAData/source_scan").size() - 1)
+							#if($incf_BaseQAAssessorData_source_scan_1_NUM_ROWS>=0)
+								#foreach($incf_BaseQAAssessorData_source_scan_1_COUNTER in [0..$incf_BaseQAAssessorData_source_scan_1_NUM_ROWS])
+<!-- BEGIN incf:BasicStructuralQAData/source_scan[$incf_BaseQAAssessorData_source_scan_1_COUNTER] -->
+									<TABLE>
+										<TR><TH align="left"><BR><font face="$ui.sansSerifFonts" size="2">incf:BasicStructuralQAData/source_scan[$incf_BaseQAAssessorData_source_scan_1_COUNTER]</font></TH></TR>
+										<TR>
+											<TD align="left" valign="top">
+												<TABLE>
+													<TR><TD>source_scan</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/source_scan[$incf_BaseQAAssessorData_source_scan_1_COUNTER]/source_scan")</TD></TR>
+												</TABLE>
+											</TD>
+										</TR>
+									</TABLE>
+<!-- END incf:BasicStructuralQAData/source_scan[$incf_BaseQAAssessorData_source_scan_1_COUNTER] -->
+								#end
+							#end
+						</TD></TR></TABLE>
+					</TD>
+				</TR>
+				<TR>
+					<TD align="left" valign="top">
+						<TABLE><TR><TD>
+							#set($xnat_abstractResource_2_NUM_ROWS=$item.getChildItems("incf:BasicStructuralQAData/in/file").size() - 1)
+							#if($xnat_abstractResource_2_NUM_ROWS>=0)
+								#foreach($xnat_abstractResource_2_COUNTER in [0..$xnat_abstractResource_2_NUM_ROWS])
+<!-- BEGIN incf:BasicStructuralQAData/in/file[$xnat_abstractResource_2_COUNTER] -->
+									<TABLE>
+										<TR><TH align="left"><BR><font face="$ui.sansSerifFonts" size="2">incf:BasicStructuralQAData/in/file[$xnat_abstractResource_2_COUNTER]</font></TH></TR>
+										<TR>
+											<TD align="left" valign="top">
+												<TABLE>
+													<TR><TD>note</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/in/file[$xnat_abstractResource_2_COUNTER]/note")</TD></TR>
+													<TR><TD>label</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/in/file[$xnat_abstractResource_2_COUNTER]/label")</TD></TR>
+												</TABLE>
+											</TD>
+										</TR>
+										<TR>
+											<TD align="left" valign="top">
+												<TABLE><TR><TD>
+													#set($xnat_abstractResource_tag_3_NUM_ROWS=$item.getChildItems("incf:BasicStructuralQAData/in/file[$xnat_abstractResource_2_COUNTER]/tags/tag").size() - 1)
+													#if($xnat_abstractResource_tag_3_NUM_ROWS>=0)
+														#foreach($xnat_abstractResource_tag_3_COUNTER in [0..$xnat_abstractResource_tag_3_NUM_ROWS])
+<!-- BEGIN incf:BasicStructuralQAData/in/file[$xnat_abstractResource_2_COUNTER]/tags/tag[$xnat_abstractResource_tag_3_COUNTER] -->
+															<TABLE>
+																<TR><TH align="left"><BR><font face="$ui.sansSerifFonts" size="2">incf:BasicStructuralQAData/in/file[$xnat_abstractResource_2_COUNTER]/tags/tag[$xnat_abstractResource_tag_3_COUNTER]</font></TH></TR>
+																<TR>
+																	<TD align="left" valign="top">
+																		<TABLE>
+																			<TR><TD>tag</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/in/file[$xnat_abstractResource_2_COUNTER]/tags/tag[$xnat_abstractResource_tag_3_COUNTER]/tag")</TD></TR>
+																			<TR><TD>name</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/in/file[$xnat_abstractResource_2_COUNTER]/tags/tag[$xnat_abstractResource_tag_3_COUNTER]/name")</TD></TR>
+																		</TABLE>
+																	</TD>
+																</TR>
+															</TABLE>
+<!-- END incf:BasicStructuralQAData/in/file[$xnat_abstractResource_2_COUNTER]/tags/tag[$xnat_abstractResource_tag_3_COUNTER] -->
+														#end
+													#end
+												</TD></TR></TABLE>
+											</TD>
+										</TR>
+									</TABLE>
+<!-- END incf:BasicStructuralQAData/in/file[$xnat_abstractResource_2_COUNTER] -->
+								#end
+							#end
+						</TD></TR></TABLE>
+					</TD>
+				</TR>
+				<TR>
+					<TD align="left" valign="top">
+						<TABLE><TR><TD>
+							#set($xnat_abstractResource_4_NUM_ROWS=$item.getChildItems("incf:BasicStructuralQAData/out/file").size() - 1)
+							#if($xnat_abstractResource_4_NUM_ROWS>=0)
+								#foreach($xnat_abstractResource_4_COUNTER in [0..$xnat_abstractResource_4_NUM_ROWS])
+<!-- BEGIN incf:BasicStructuralQAData/out/file[$xnat_abstractResource_4_COUNTER] -->
+									<TABLE>
+										<TR><TH align="left"><BR><font face="$ui.sansSerifFonts" size="2">incf:BasicStructuralQAData/out/file[$xnat_abstractResource_4_COUNTER]</font></TH></TR>
+										<TR>
+											<TD align="left" valign="top">
+												<TABLE>
+													<TR><TD>note</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/out/file[$xnat_abstractResource_4_COUNTER]/note")</TD></TR>
+													<TR><TD>label</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/out/file[$xnat_abstractResource_4_COUNTER]/label")</TD></TR>
+												</TABLE>
+											</TD>
+										</TR>
+										<TR>
+											<TD align="left" valign="top">
+												<TABLE><TR><TD>
+													#set($xnat_abstractResource_tag_5_NUM_ROWS=$item.getChildItems("incf:BasicStructuralQAData/out/file[$xnat_abstractResource_4_COUNTER]/tags/tag").size() - 1)
+													#if($xnat_abstractResource_tag_5_NUM_ROWS>=0)
+														#foreach($xnat_abstractResource_tag_5_COUNTER in [0..$xnat_abstractResource_tag_5_NUM_ROWS])
+<!-- BEGIN incf:BasicStructuralQAData/out/file[$xnat_abstractResource_4_COUNTER]/tags/tag[$xnat_abstractResource_tag_5_COUNTER] -->
+															<TABLE>
+																<TR><TH align="left"><BR><font face="$ui.sansSerifFonts" size="2">incf:BasicStructuralQAData/out/file[$xnat_abstractResource_4_COUNTER]/tags/tag[$xnat_abstractResource_tag_5_COUNTER]</font></TH></TR>
+																<TR>
+																	<TD align="left" valign="top">
+																		<TABLE>
+																			<TR><TD>tag</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/out/file[$xnat_abstractResource_4_COUNTER]/tags/tag[$xnat_abstractResource_tag_5_COUNTER]/tag")</TD></TR>
+																			<TR><TD>name</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/out/file[$xnat_abstractResource_4_COUNTER]/tags/tag[$xnat_abstractResource_tag_5_COUNTER]/name")</TD></TR>
+																		</TABLE>
+																	</TD>
+																</TR>
+															</TABLE>
+<!-- END incf:BasicStructuralQAData/out/file[$xnat_abstractResource_4_COUNTER]/tags/tag[$xnat_abstractResource_tag_5_COUNTER] -->
+														#end
+													#end
+												</TD></TR></TABLE>
+											</TD>
+										</TR>
+									</TABLE>
+<!-- END incf:BasicStructuralQAData/out/file[$xnat_abstractResource_4_COUNTER] -->
+								#end
+							#end
+						</TD></TR></TABLE>
+					</TD>
+				</TR>
+				<TR>
+					<TD align="left" valign="top">
+						<TABLE><TR><TD>
+							#set($xnat_addField_6_NUM_ROWS=$item.getChildItems("incf:BasicStructuralQAData/parameters/addParam").size() - 1)
+							#if($xnat_addField_6_NUM_ROWS>=0)
+								#foreach($xnat_addField_6_COUNTER in [0..$xnat_addField_6_NUM_ROWS])
+<!-- BEGIN incf:BasicStructuralQAData/parameters/addParam[$xnat_addField_6_COUNTER] -->
+									<TABLE>
+										<TR><TH align="left"><BR><font face="$ui.sansSerifFonts" size="2">incf:BasicStructuralQAData/parameters/addParam[$xnat_addField_6_COUNTER]</font></TH></TR>
+										<TR>
+											<TD align="left" valign="top">
+												<TABLE>
+													<TR><TD>addField</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/parameters/addParam[$xnat_addField_6_COUNTER]/addField")</TD></TR>
+													<TR><TD>name</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/parameters/addParam[$xnat_addField_6_COUNTER]/name")</TD></TR>
+												</TABLE>
+											</TD>
+										</TR>
+									</TABLE>
+<!-- END incf:BasicStructuralQAData/parameters/addParam[$xnat_addField_6_COUNTER] -->
+								#end
+							#end
+						</TD></TR></TABLE>
+					</TD>
+				</TR>
+				<TR>
+					<TD align="left" valign="top">
+<!-- BEGIN incf:BasicStructuralQAData/provenance -->
+						<TABLE>
+							<TR><TH align="left"><BR><font face="$ui.sansSerifFonts" size="2">incf:BasicStructuralQAData/provenance</font></TH></TR>
+							<TR>
+								<TD align="left" valign="top">
+									<TABLE>
+									</TABLE>
+								</TD>
+							</TR>
+							<TR>
+								<TD align="left" valign="top">
+									<TABLE><TR><TD>
+										#set($prov_processStep_8_NUM_ROWS=$item.getChildItems("incf:BasicStructuralQAData/provenance/processStep").size() - 1)
+										#if($prov_processStep_8_NUM_ROWS>=0)
+											#foreach($prov_processStep_8_COUNTER in [0..$prov_processStep_8_NUM_ROWS])
+<!-- BEGIN incf:BasicStructuralQAData/provenance/processStep[$prov_processStep_8_COUNTER] -->
+												<TABLE>
+													<TR><TH align="left"><BR><font face="$ui.sansSerifFonts" size="2">incf:BasicStructuralQAData/provenance/processStep[$prov_processStep_8_COUNTER]</font></TH></TR>
+													<TR>
+														<TD align="left" valign="top">
+															<TABLE>
+																<TR><TD>program</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/provenance/processStep[$prov_processStep_8_COUNTER]/program")</TD></TR>
+																<TR><TD>program/version</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/provenance/processStep[$prov_processStep_8_COUNTER]/program/version")</TD></TR>
+																<TR><TD>program/arguments</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/provenance/processStep[$prov_processStep_8_COUNTER]/program/arguments")</TD></TR>
+																<TR><TD>timestamp</TD><TD>$!item.getProperty("incf:BasicStructuralQAData/provenance/processStep[$prov_processStep_8_COUNTER]/timestamp")</TD></TR>
+																<TR><TD>cvs</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/provenance/processStep[$prov_processStep_8_COUNTER]/cvs")</TD></TR>
+																<TR><TD>user</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/provenance/processStep[$prov_processStep_8_COUNTER]/user")</TD></TR>
+																<TR><TD>machine</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/provenance/processStep[$prov_processStep_8_COUNTER]/machine")</TD></TR>
+																<TR><TD>platform</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/provenance/processStep[$prov_processStep_8_COUNTER]/platform")</TD></TR>
+																<TR><TD>platform/version</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/provenance/processStep[$prov_processStep_8_COUNTER]/platform/version")</TD></TR>
+																<TR><TD>compiler</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/provenance/processStep[$prov_processStep_8_COUNTER]/compiler")</TD></TR>
+																<TR><TD>compiler/version</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/provenance/processStep[$prov_processStep_8_COUNTER]/compiler/version")</TD></TR>
+															</TABLE>
+														</TD>
+													</TR>
+													<TR>
+														<TD align="left" valign="top">
+															<TABLE><TR><TD>
+																#set($prov_processStep_library_9_NUM_ROWS=$item.getChildItems("incf:BasicStructuralQAData/provenance/processStep[$prov_processStep_8_COUNTER]/library").size() - 1)
+																#if($prov_processStep_library_9_NUM_ROWS>=0)
+																	#foreach($prov_processStep_library_9_COUNTER in [0..$prov_processStep_library_9_NUM_ROWS])
+<!-- BEGIN incf:BasicStructuralQAData/provenance/processStep[$prov_processStep_8_COUNTER]/library[$prov_processStep_library_9_COUNTER] -->
+																		<TABLE>
+																			<TR><TH align="left"><BR><font face="$ui.sansSerifFonts" size="2">incf:BasicStructuralQAData/provenance/processStep[$prov_processStep_8_COUNTER]/library[$prov_processStep_library_9_COUNTER]</font></TH></TR>
+																			<TR>
+																				<TD align="left" valign="top">
+																					<TABLE>
+																						<TR><TD>library</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/provenance/processStep[$prov_processStep_8_COUNTER]/library[$prov_processStep_library_9_COUNTER]/library")</TD></TR>
+																						<TR><TD>version</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/provenance/processStep[$prov_processStep_8_COUNTER]/library[$prov_processStep_library_9_COUNTER]/version")</TD></TR>
+																					</TABLE>
+																				</TD>
+																			</TR>
+																		</TABLE>
+<!-- END incf:BasicStructuralQAData/provenance/processStep[$prov_processStep_8_COUNTER]/library[$prov_processStep_library_9_COUNTER] -->
+																	#end
+																#end
+															</TD></TR></TABLE>
+														</TD>
+													</TR>
+												</TABLE>
+<!-- END incf:BasicStructuralQAData/provenance/processStep[$prov_processStep_8_COUNTER] -->
+											#end
+										#end
+									</TD></TR></TABLE>
+								</TD>
+							</TR>
+						</TABLE>
+<!-- END incf:BasicStructuralQAData/provenance -->
+					</TD>
+				</TR>
+				<TR>
+					<TD align="left" valign="top">
+						<TABLE><TR><TD>
+							#set($xnat_experimentData_share_10_NUM_ROWS=$item.getChildItems("incf:BasicStructuralQAData/sharing/share").size() - 1)
+							#if($xnat_experimentData_share_10_NUM_ROWS>=0)
+								#foreach($xnat_experimentData_share_10_COUNTER in [0..$xnat_experimentData_share_10_NUM_ROWS])
+<!-- BEGIN incf:BasicStructuralQAData/sharing/share[$xnat_experimentData_share_10_COUNTER] -->
+									<TABLE>
+										<TR><TH align="left"><BR><font face="$ui.sansSerifFonts" size="2">incf:BasicStructuralQAData/sharing/share[$xnat_experimentData_share_10_COUNTER]</font></TH></TR>
+										<TR>
+											<TD align="left" valign="top">
+												<TABLE>
+													<TR><TD>share</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/sharing/share[$xnat_experimentData_share_10_COUNTER]/share")</TD></TR>
+													<TR><TD>label</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/sharing/share[$xnat_experimentData_share_10_COUNTER]/label")</TD></TR>
+													<TR><TD>project</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/sharing/share[$xnat_experimentData_share_10_COUNTER]/project")</TD></TR>
+												</TABLE>
+											</TD>
+										</TR>
+									</TABLE>
+<!-- END incf:BasicStructuralQAData/sharing/share[$xnat_experimentData_share_10_COUNTER] -->
+								#end
+							#end
+						</TD></TR></TABLE>
+					</TD>
+				</TR>
+				<TR>
+					<TD align="left" valign="top">
+<!-- BEGIN incf:BasicStructuralQAData/investigator -->
+						<TABLE>
+							<TR><TH align="left"><BR><font face="$ui.sansSerifFonts" size="2">incf:BasicStructuralQAData/investigator</font></TH></TR>
+							<TR>
+								<TD align="left" valign="top">
+									<TABLE>
+										<TR><TD>title</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/investigator/title")</TD></TR>
+										<TR><TD>firstname</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/investigator/firstname")</TD></TR>
+										<TR><TD>lastname</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/investigator/lastname")</TD></TR>
+										<TR><TD>institution</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/investigator/institution")</TD></TR>
+										<TR><TD>department</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/investigator/department")</TD></TR>
+										<TR><TD>email</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/investigator/email")</TD></TR>
+										<TR><TD>phone</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/investigator/phone")</TD></TR>
+										<TR><TD>ID</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/investigator/ID")</TD></TR>
+									</TABLE>
+								</TD>
+							</TR>
+						</TABLE>
+<!-- END incf:BasicStructuralQAData/investigator -->
+					</TD>
+				</TR>
+				<TR>
+					<TD align="left" valign="top">
+<!-- BEGIN incf:BasicStructuralQAData/validation -->
+						<TABLE>
+							<TR><TH align="left"><BR><font face="$ui.sansSerifFonts" size="2">incf:BasicStructuralQAData/validation</font></TH></TR>
+							<TR>
+								<TD align="left" valign="top">
+									<TABLE>
+										<TR><TD>method</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/validation/method")</TD></TR>
+										<TR><TD>date</TD><TD>$!item.getProperty("incf:BasicStructuralQAData/validation/date")</TD></TR>
+										<TR><TD>notes</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/validation/notes")</TD></TR>
+										<TR><TD>status</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/validation/status")</TD></TR>
+									</TABLE>
+								</TD>
+							</TR>
+						</TABLE>
+<!-- END incf:BasicStructuralQAData/validation -->
+					</TD>
+				</TR>
+				<TR>
+					<TD align="left" valign="top">
+						<TABLE><TR><TD>
+							#set($xnat_abstractResource_13_NUM_ROWS=$item.getChildItems("incf:BasicStructuralQAData/resources/resource").size() - 1)
+							#if($xnat_abstractResource_13_NUM_ROWS>=0)
+								#foreach($xnat_abstractResource_13_COUNTER in [0..$xnat_abstractResource_13_NUM_ROWS])
+<!-- BEGIN incf:BasicStructuralQAData/resources/resource[$xnat_abstractResource_13_COUNTER] -->
+									<TABLE>
+										<TR><TH align="left"><BR><font face="$ui.sansSerifFonts" size="2">incf:BasicStructuralQAData/resources/resource[$xnat_abstractResource_13_COUNTER]</font></TH></TR>
+										<TR>
+											<TD align="left" valign="top">
+												<TABLE>
+													<TR><TD>note</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/resources/resource[$xnat_abstractResource_13_COUNTER]/note")</TD></TR>
+													<TR><TD>label</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/resources/resource[$xnat_abstractResource_13_COUNTER]/label")</TD></TR>
+												</TABLE>
+											</TD>
+										</TR>
+										<TR>
+											<TD align="left" valign="top">
+												<TABLE><TR><TD>
+													#set($xnat_abstractResource_tag_14_NUM_ROWS=$item.getChildItems("incf:BasicStructuralQAData/resources/resource[$xnat_abstractResource_13_COUNTER]/tags/tag").size() - 1)
+													#if($xnat_abstractResource_tag_14_NUM_ROWS>=0)
+														#foreach($xnat_abstractResource_tag_14_COUNTER in [0..$xnat_abstractResource_tag_14_NUM_ROWS])
+<!-- BEGIN incf:BasicStructuralQAData/resources/resource[$xnat_abstractResource_13_COUNTER]/tags/tag[$xnat_abstractResource_tag_14_COUNTER] -->
+															<TABLE>
+																<TR><TH align="left"><BR><font face="$ui.sansSerifFonts" size="2">incf:BasicStructuralQAData/resources/resource[$xnat_abstractResource_13_COUNTER]/tags/tag[$xnat_abstractResource_tag_14_COUNTER]</font></TH></TR>
+																<TR>
+																	<TD align="left" valign="top">
+																		<TABLE>
+																			<TR><TD>tag</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/resources/resource[$xnat_abstractResource_13_COUNTER]/tags/tag[$xnat_abstractResource_tag_14_COUNTER]/tag")</TD></TR>
+																			<TR><TD>name</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/resources/resource[$xnat_abstractResource_13_COUNTER]/tags/tag[$xnat_abstractResource_tag_14_COUNTER]/name")</TD></TR>
+																		</TABLE>
+																	</TD>
+																</TR>
+															</TABLE>
+<!-- END incf:BasicStructuralQAData/resources/resource[$xnat_abstractResource_13_COUNTER]/tags/tag[$xnat_abstractResource_tag_14_COUNTER] -->
+														#end
+													#end
+												</TD></TR></TABLE>
+											</TD>
+										</TR>
+									</TABLE>
+<!-- END incf:BasicStructuralQAData/resources/resource[$xnat_abstractResource_13_COUNTER] -->
+								#end
+							#end
+						</TD></TR></TABLE>
+					</TD>
+				</TR>
+				<TR>
+					<TD align="left" valign="top">
+						<TABLE><TR><TD>
+							#set($xnat_experimentData_field_15_NUM_ROWS=$item.getChildItems("incf:BasicStructuralQAData/fields/field").size() - 1)
+							#if($xnat_experimentData_field_15_NUM_ROWS>=0)
+								#foreach($xnat_experimentData_field_15_COUNTER in [0..$xnat_experimentData_field_15_NUM_ROWS])
+<!-- BEGIN incf:BasicStructuralQAData/fields/field[$xnat_experimentData_field_15_COUNTER] -->
+									<TABLE>
+										<TR><TH align="left"><BR><font face="$ui.sansSerifFonts" size="2">incf:BasicStructuralQAData/fields/field[$xnat_experimentData_field_15_COUNTER]</font></TH></TR>
+										<TR>
+											<TD align="left" valign="top">
+												<TABLE>
+													<TR><TD>field</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/fields/field[$xnat_experimentData_field_15_COUNTER]/field")</TD></TR>
+													<TR><TD>name</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/fields/field[$xnat_experimentData_field_15_COUNTER]/name")</TD></TR>
+												</TABLE>
+											</TD>
+										</TR>
+									</TABLE>
+<!-- END incf:BasicStructuralQAData/fields/field[$xnat_experimentData_field_15_COUNTER] -->
+								#end
+							#end
+						</TD></TR></TABLE>
+					</TD>
+				</TR>
+				<TR>
+					<TD align="left" valign="top">
+						<TABLE><TR><TD>
+							#set($incf_BasicStructuralQAStatsData_16_NUM_ROWS=$item.getChildItems("incf:BasicStructuralQAData/BasicStructuralQAStats").size() - 1)
+							#if($incf_BasicStructuralQAStatsData_16_NUM_ROWS>=0)
+								#foreach($incf_BasicStructuralQAStatsData_16_COUNTER in [0..$incf_BasicStructuralQAStatsData_16_NUM_ROWS])
+<!-- BEGIN incf:BasicStructuralQAData/BasicStructuralQAStats[$incf_BasicStructuralQAStatsData_16_COUNTER] -->
+									<TABLE>
+										<TR><TH align="left"><BR><font face="$ui.sansSerifFonts" size="2">incf:BasicStructuralQAData/BasicStructuralQAStats[$incf_BasicStructuralQAStatsData_16_COUNTER]</font></TH></TR>
+										<TR>
+											<TD align="left" valign="top">
+												<TABLE>
+													<TR><TD>RobustMinIntensity</TD><TD>$!item.getDoubleProperty("incf:BasicStructuralQAData/BasicStructuralQAStats[$incf_BasicStructuralQAStatsData_16_COUNTER]/RobustMinIntensity")</TD></TR>
+													<TR><TD>RobustMaxIntensity</TD><TD>$!item.getDoubleProperty("incf:BasicStructuralQAData/BasicStructuralQAStats[$incf_BasicStructuralQAStatsData_16_COUNTER]/RobustMaxIntensity")</TD></TR>
+													<TR><TD>MinIntensity</TD><TD>$!item.getDoubleProperty("incf:BasicStructuralQAData/BasicStructuralQAStats[$incf_BasicStructuralQAStatsData_16_COUNTER]/MinIntensity")</TD></TR>
+													<TR><TD>MaxIntensity</TD><TD>$!item.getDoubleProperty("incf:BasicStructuralQAData/BasicStructuralQAStats[$incf_BasicStructuralQAStatsData_16_COUNTER]/MaxIntensity")</TD></TR>
+													<TR><TD>MeanIntensity</TD><TD>$!item.getDoubleProperty("incf:BasicStructuralQAData/BasicStructuralQAStats[$incf_BasicStructuralQAStatsData_16_COUNTER]/MeanIntensity")</TD></TR>
+													<TR><TD>StdIntensity</TD><TD>$!item.getDoubleProperty("incf:BasicStructuralQAData/BasicStructuralQAStats[$incf_BasicStructuralQAStatsData_16_COUNTER]/StdIntensity")</TD></TR>
+													<TR><TD>NVoxels</TD><TD>$!item.getDoubleProperty("incf:BasicStructuralQAData/BasicStructuralQAStats[$incf_BasicStructuralQAStatsData_16_COUNTER]/NVoxels")</TD></TR>
+													<TR><TD>Volume</TD><TD>$!item.getDoubleProperty("incf:BasicStructuralQAData/BasicStructuralQAStats[$incf_BasicStructuralQAStatsData_16_COUNTER]/Volume")</TD></TR>
+													<TR><TD>region</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/BasicStructuralQAStats[$incf_BasicStructuralQAStatsData_16_COUNTER]/region")</TD></TR>
+												</TABLE>
+											</TD>
+										</TR>
+									</TABLE>
+<!-- END incf:BasicStructuralQAData/BasicStructuralQAStats[$incf_BasicStructuralQAStatsData_16_COUNTER] -->
+								#end
+							#end
+						</TD></TR></TABLE>
+					</TD>
+				</TR>
+			</TABLE>
+<!-- END incf:BasicStructuralQAData -->
+		</TD>
+	</TR>
+</TABLE><BR>#parse("/screens/ReportProjectSpecificFields.vm")
