@@ -346,15 +346,15 @@ with QATemporaryDirectory() as co:
             print str(data)
             continue
 
-#        args = ['/usr/local/bxh_xcede_tools/bin/fmriqa_generate.pl', 
-#                '--verbose', 
-#                xcede_fname, 
-#                output_dir]
+        args = ['/usr/local/bxh_xcede_tools/bin/fmriqa_generate.pl', 
+                '--verbose', 
+                xcede_fname, 
+                output_dir]
 
-        if scan.label() != '1201':
-            print 'skip'
-            continue
-        args = ['/bin/cp', '-rv', '/usr/share/tomcat6/qa', output_dir]
+#        if scan.label() != '1201':
+#            print 'skip'
+#            continue
+#        args = ['/bin/cp', '-rv', '/usr/share/tomcat6/qa', output_dir]
 
         try:
             subprocess.check_call(args)

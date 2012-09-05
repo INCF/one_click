@@ -146,46 +146,46 @@ with QATemporaryDirectory() as co:
 
         tissue_stats = {}
 
-        external_stats = '0.000000 381.000000 0.000000 68.198997 4.351732 27.713835 7803910 9364692.372119'
-        brain_stats = '0.000000 1109.000000 21.070999 398.131012 175.895666 90.608030 1620041 1944049.277250'
-        tissue_stats['csf'] = '1.000000 1109.000000 6.540000 460.820007 88.254002 104.979207 284580 341496.013570'
-        tissue_stats['gm'] = '75.000000 303.000000 91.872002 207.011993 140.452591 29.985393 753119 903742.835912'
-        tissue_stats['wm'] = '154.000000 501.000000 181.759995 416.332001 264.649799 55.033397 582148 698577.627759'
+#        external_stats = '0.000000 381.000000 0.000000 68.198997 4.351732 27.713835 7803910 9364692.372119'
+#        brain_stats = '0.000000 1109.000000 21.070999 398.131012 175.895666 90.608030 1620041 1944049.277250'
+#        tissue_stats['csf'] = '1.000000 1109.000000 6.540000 460.820007 88.254002 104.979207 284580 341496.013570'
+#        tissue_stats['gm'] = '75.000000 303.000000 91.872002 207.011993 140.452591 29.985393 753119 903742.835912'
+#        tissue_stats['wm'] = '154.000000 501.000000 181.759995 416.332001 264.649799 55.033397 582148 698577.627759'
 
-#        try:
-#            shutil.copy(nifti_file, '%s/anat.nii.gz' % scan_tempdir)
-#            args = ['bet', '%s/anat' % scan_tempdir, 
-#                    '%s/anat_brain' % scan_tempdir, 
-#                    '-A', '-m']
-#            subprocess.check_call(args)
-#            args = ['fslmaths', '%s/anat_brain_outskin_mask' % scan_tempdir, 
-#                    '-sub', '1', 
-#                    '-mul', '-1', 
-#                    '%s/external' % scan_tempdir]
-#            subprocess.check_call(args)
-#            args = ['fast', '-t', '1', '%s/anat_brain' % scan_tempdir]
-#            subprocess.check_call(args)
-#            args = ['fslstats', '%s/anat' % scan_tempdir, 
-#                    '-k', '%s/external' % scan_tempdir, 
-#                    '-R', '-r', '-m', '-s', '-v']
-#            external_stats = check_call_stdout(args)
-#            args = ['fslstats', '%s/anat' % scan_tempdir, 
-#                    '-k', '%s/anat_brain_mask' % scan_tempdir, 
-#                    '-R', '-r', '-m', '-s', '-v']
-#            brain_stats = check_call_stdout(args)
-#            for (index, tissue) in (('1', 'csf'), ('2', 'gm'), ('3', 'wm')):
-#                args = ['fslmaths', '%s/anat_brain_seg' % scan_tempdir, 
-#                        '-thr', index, 
-#                        '-uthr', index, 
-#                        '-bin', tissue]
-#                subprocess.check_call(args)
-#                args = ['fslstats', '%s/anat' % scan_tempdir, 
-#                        '-k', tissue, 
-#                        '-R', '-r', '-m', '-s', '-v']
-#                tissue_stats[tissue] = check_call_stdout(args)
-#        except subprocess.CalledProcessError, data:
-#            print str(data)
-#            continue
+        try:
+            shutil.copy(nifti_file, '%s/anat.nii.gz' % scan_tempdir)
+            args = ['bet', '%s/anat' % scan_tempdir, 
+                    '%s/anat_brain' % scan_tempdir, 
+                    '-A', '-m']
+            subprocess.check_call(args)
+            args = ['fslmaths', '%s/anat_brain_outskin_mask' % scan_tempdir, 
+                    '-sub', '1', 
+                    '-mul', '-1', 
+                    '%s/external' % scan_tempdir]
+            subprocess.check_call(args)
+            args = ['fast', '-t', '1', '%s/anat_brain' % scan_tempdir]
+            subprocess.check_call(args)
+            args = ['fslstats', '%s/anat' % scan_tempdir, 
+                    '-k', '%s/external' % scan_tempdir, 
+                    '-R', '-r', '-m', '-s', '-v']
+            external_stats = check_call_stdout(args)
+            args = ['fslstats', '%s/anat' % scan_tempdir, 
+                    '-k', '%s/anat_brain_mask' % scan_tempdir, 
+                    '-R', '-r', '-m', '-s', '-v']
+            brain_stats = check_call_stdout(args)
+            for (index, tissue) in (('1', 'csf'), ('2', 'gm'), ('3', 'wm')):
+                args = ['fslmaths', '%s/anat_brain_seg' % scan_tempdir, 
+                        '-thr', index, 
+                        '-uthr', index, 
+                        '-bin', tissue]
+                subprocess.check_call(args)
+                args = ['fslstats', '%s/anat' % scan_tempdir, 
+                        '-k', tissue, 
+                        '-R', '-r', '-m', '-s', '-v']
+                tissue_stats[tissue] = check_call_stdout(args)
+        except subprocess.CalledProcessError, data:
+            print str(data)
+            continue
 
         doc = xml.dom.minidom.Document()
         root = doc.createElement('incf:BasicStructuralQA')
