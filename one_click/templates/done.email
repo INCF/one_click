@@ -1,13 +1,3 @@
-Thanks for uploading data to xnat.incf.org, which is available at http://xnat.incf.org/xnat/REST/projects/{{ project }}.
-
-{% if not scans %}
-Unfortunately the quality control we tried to run failed on all scans.  This is probably because no scans had more than one time point.
-{% else %}
-Quality control results for one or more scans can be found here:
-
-    {% for scan in scans %}
-    Scan {{ scan }}: http://xnat.incf.org/qc/{{ project }}/{{ experiment }}/{{ scan }}
-    {% endfor %}
-{% endif %}
+Thanks for uploading data to xnat.incf.org, which is available at http://xnat.incf.org/xnat/ under project {{ project }}, session {{ session }}.  Quality control for uploaded data, if successful, can be found on the page for your data.
 
 Please see http://xnat.incf.org/ for more information and e-mail xnat-admin@incf.org with any questions.

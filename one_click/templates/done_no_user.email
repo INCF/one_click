@@ -1,0 +1,3 @@
+Somebody, perhaps you, uploaded data to your {{ project }} project at http://xnat.incf.org/xnat/ as {{ session }}.  Uploading is complete, and quality control for uploaded data, if successful, can be found on the page for this data.
+
+Please see http://xnat.incf.org/ for more information and e-mail xnat-admin@incf.org with any questions.
