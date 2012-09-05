@@ -167,7 +167,7 @@ INCF download agreement
 You must agree to the following terms before downloading:
 </p>
 <p>
-#include("../download_agreement.txt")
+#include("download_agreement.txt")
 </p>
 
 <DIV class="spacer">&nbsp;</DIV>
