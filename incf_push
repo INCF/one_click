@@ -387,7 +387,10 @@ for arg in args:
         all_files.append(arg)
     elif os.path.isdir(arg):
         for (dirpath, dirnames, fnames) in os.walk(arg):
-            all_files.extend([ '%s/%s' % (dirpath, f) for f in fnames ])
+            for f in fnames:
+                if f == 'DICOMDIR':
+                    continue
+                all_files.append('%s/%s' % (dirpath, f))
     else:
         sys.stderr.write('%s: %s is not a file or directory\n' % (progname, 
                                                                   arg))
