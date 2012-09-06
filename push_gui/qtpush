@@ -1,0 +1,273 @@
+#!/usr/bin/python
+
+# See file COPYING distributed with the one_click package for the copyright
+# and license.
+
+# TODO: server configuration
+
+import sys
+import os
+import subprocess
+# TODO remove this (time)
+import time
+from PyQt4 import QtCore, QtGui, uic
+import dicom
+
+#############################################################################
+# defaults and definitions
+#
+
+try:
+    subprocess.call(['storescu'], 
+                    stdout=subprocess.PIPE, 
+                    stderr=subprocess.PIPE)
+except:
+    have_storescu = False
+else:
+    have_storescu = True
+
+#############################################################################
+# GUI elements
+#
+
+class Application(QtGui.QApplication):
+
+    def __init__(self, argv):
+        QtGui.QApplication.__init__(self, argv)
+        self.quit_dialog = QuitDialog(self)
+        self.agreement_dialog = AgreementDialog(self)
+        self.agreement_dialog.show()
+        return
+
+    def scan_files(self):
+        self.agreement_dialog.hide()
+        paths = ['/Users/ch/Desktop/umms/data/P0196', 
+                 '/Users/ch/Desktop/umms/data/P0197-DKennedy_CANDI_08192010']
+        paths = paths[0:1]
+        self.file_loader = FileLoaderDialog(self, paths)
+        self.file_loader.show()
+        self.file_loader.scan()
+        self.file_loader.read()
+        if self.file_loader.quit_called:
+            self.quit()
+        self.file_loader.hide()
+        if not self.file_loader.dicom_files:
+            self.show_exit_notice('no dicom files found, exiting')
+            self.quit()
+        self.file_loader.hide()
+        self.login()
+        return
+
+    def login(self):
+        self.login_dialog = LoginDialog(self)
+        self.login_dialog.show()
+        return
+
+    def get_upload_info(self):
+        self.login_dialog.hide()
+        self.info_dialog = InfoDialog(self)
+        self.info_dialog.show()
+        return
+
+    def upload(self):
+        self.info_dialog.hide()
+        self.upload_dialog = UploadDialog(self)
+        self.upload_dialog.show()
+        return
+
+    def finish(self):
+        self.upload_dialog.hide()
+        self.show_exit_notice('done!')
+
+    def show_exit_notice(self, msg):
+        self.exit_notice_dialog = ExitNoticeDialog(self, msg)
+        self.exit_notice_dialog.exec_()
+        self.quit()
+
+class UploadDialog(QtGui.QDialog):
+
+    def __init__(self, app):
+        QtGui.QDialog.__init__(self)
+        uic.loadUi('ui/upload_dialog.ui', self)
+        self.info_label.setText('uploading')
+        self.progress.setRange(0, 10)
+        self.progress.setValue(5)
+        self.app = app
+        return
+
+    def quit(self):
+        # TODO confirm quit
+        self.app.quit()
+
+    def complete(self):
+        self.app.finish()
+        return
+
+class InfoDialog(QtGui.QDialog):
+
+    def __init__(self, app):
+        QtGui.QDialog.__init__(self)
+        uic.loadUi('ui/info_dialog.ui', self)
+        self.app = app
+        return
+
+    def quit(self):
+        # TODO confirm quit
+        self.app.quit()
+
+    def upload(self):
+        self.app.upload()
+        return
+
+class LoginDialog(QtGui.QDialog):
+
+    def __init__(self, app):
+        QtGui.QDialog.__init__(self)
+        uic.loadUi('ui/login_dialog.ui', self)
+        self.authenticate_button.setEnabled(False)
+        self.info_label.setText('INCF creds')
+        self.app = app
+        self.jsessionid = None
+        return
+
+    def edit_made(self, val):
+        if self.login_edit.text() and self.password_edit.text():
+            self.authenticate_button.setEnabled(True)
+        else:
+            self.authenticate_button.setEnabled(False)
+        return
+
+    def authenticate(self):
+        # TODO real authentication
+        self.info_label.setText('authenticating...')
+        # this will allow the label to update
+        self.app.processEvents()
+        time.sleep(1)
+        if self.login_edit.text() != 'christian' \
+           or self.password_edit.text() != 'ch':
+            self.info_label.setText('no good')
+            return
+        self.jsessionid = 'jsessionid'
+        self.app.get_upload_info()
+        return
+
+    def quit(self):
+        # TODO confirm quit
+        self.app.quit()
+
+class ExitNoticeDialog(QtGui.QDialog):
+
+    def __init__(self, app, msg):
+        QtGui.QDialog.__init__(self)
+        uic.loadUi('ui/exit_notice_dialog.ui', self)
+        self.label.setText(msg)
+        self.app = app
+        return
+
+class QuitDialog(QtGui.QDialog):
+
+    def __init__(self, app):
+        QtGui.QDialog.__init__(self)
+        uic.loadUi('ui/quit_dialog.ui', self)
+        self.setModal(True)
+        self.app = app
+        return
+
+class FileLoaderDialog(QtGui.QDialog):
+
+    def __init__(self, app, paths):
+        QtGui.QDialog.__init__(self)
+        uic.loadUi('ui/file_loader_dialog.ui', self)
+        self.app = app
+        self.paths = paths
+        self.continue_button.setEnabled(False)
+        self.status_label.setText('Scanning for files...')
+        self.progress.setRange(0, 1)
+        self.progress.setValue(0)
+        self.files = []
+        self.quit_called = False
+        return
+
+    def scan(self):
+        for path in self.paths:
+            if os.path.isdir(path):
+                for (dirpath, dirnames, fnames) in os.walk(path):
+                    for f in fnames:
+                        if f == 'DICOMDIR':
+                            continue
+                        self.files.append('%s/%s' % (dirpath, f))
+            else:
+                self.files.append(path)
+        return
+
+    def read(self):
+        # TODO: restore
+        self.dicom_files = [1,2,3]
+        return
+        self.dicom_files = []
+        self.progress.setMaximum(len(self.files))
+        for (i, fname) in enumerate(self.files):
+            msg = 'Scanning files (%d of %d)...' % (i+1, len(self.files))
+            self.status_label.setText(msg)
+            self.progress.setValue(i+1)
+            try:
+                print fname
+                do = dicom.read_file(fname)
+            except:
+                pass
+            else:
+                print 'good'
+                self.dicom_files.append(fname)
+            self.app.processEvents()
+            if self.quit_called:
+                return
+        return
+
+    def quit(self):
+        self.app.quit_dialog.show()
+        if self.app.quit_dialog.exec_():
+            self.quit_called = True
+        return
+
+class NoDCMTKWindow(QtGui.QDialog):
+
+    def __init__(self, app):
+        QtGui.QDialog.__init__(self)
+        uic.loadUi('ui/no_dcmtk_window.ui', self)
+        self.app = app
+        return
+
+    def quit(self):
+        self.app.quit()
+
+class AgreementDialog(QtGui.QDialog):
+
+    def __init__(self, app):
+        QtGui.QDialog.__init__(self)
+        uic.loadUi('ui/agreement_dialog.ui', self)
+        self.continue_button.setEnabled(False)
+        self.app = app
+        return
+
+    def quit(self):
+        self.app.quit()
+
+    def set_agreement(self, value):
+        self.continue_button.setEnabled(value)
+        return
+
+    def cont(self):
+        self.app.scan_files()
+        return
+
+app = Application(sys.argv)
+app.setApplicationName('INCF One Click Upload')
+
+if not have_storescu:
+    no_dcmtk_window = NoDCMTKWindow(app)
+    no_dcmtk_window.show()
+    sys.exit(app.exec_())
+
+sys.exit(app.exec_())
+
+# eof
