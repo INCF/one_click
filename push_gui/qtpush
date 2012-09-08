@@ -43,11 +43,15 @@ sessions = {'christian': ['subj1_sess1', 'subj1_sess2']}
 
 class Application(QtGui.QApplication):
 
-    def __init__(self, argv):
+    def __init__(self, argv, have_storescu):
         QtGui.QApplication.__init__(self, argv)
         self.quit_dialog = QuitDialog(self)
-        self.agreement_dialog = AgreementDialog(self)
-        self.agreement_dialog.show()
+        if not have_storescu:
+            self.no_dcmtk_dialog = NoDCMTKDialog(self)
+            self.no_dcmtk_dialog.show()
+        else:
+            self.agreement_dialog = AgreementDialog(self)
+            self.agreement_dialog.show()
         return
 
     def scan_files(self):
@@ -329,11 +333,11 @@ class FileLoaderDialog(QtGui.QDialog):
             self.quit_called = True
         return
 
-class NoDCMTKWindow(QtGui.QDialog):
+class NoDCMTKDialog(QtGui.QDialog):
 
     def __init__(self, app):
         QtGui.QDialog.__init__(self)
-        uic.loadUi('ui/no_dcmtk_window.ui', self)
+        uic.loadUi('ui/no_dcmtk_dialog.ui', self)
         self.app = app
         return
 
@@ -360,13 +364,8 @@ class AgreementDialog(QtGui.QDialog):
         self.app.scan_files()
         return
 
-app = Application(sys.argv)
+app = Application(sys.argv, have_storescu)
 app.setApplicationName('INCF One Click Upload')
-
-if not have_storescu:
-    no_dcmtk_window = NoDCMTKWindow(app)
-    no_dcmtk_window.show()
-    sys.exit(app.exec_())
 
 sys.exit(app.exec_())
 
