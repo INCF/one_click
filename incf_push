@@ -640,9 +640,9 @@ for patient_id in sorted(dicom_files):
                 if rv != 0:
                     sys.stderr.write('\n')
                     sys.stderr.write('%s: error in push; bailing out\n' % progname)
-                    sys.stderr.write('it\'s likely that your data upload is partial and incomplete\n')
-                    sys.stderr.write('please make a note of your subject and session names and contact \n')
-                    sys.stderr.write('xnat-admin@incf.org for assistance\n')
+                    sys.stderr.write('It\'s likely that your data upload is partial and incomplete.  \n')
+                    sys.stderr.write('Please make a note of your subject and session names and contact \n')
+                    sys.stderr.write('xnat-admin@incf.org for assistance.\n')
                     sys.stderr.write('\n')
                     sys.exit(1)
                 staged_files = staged_files[files_per_push:]
