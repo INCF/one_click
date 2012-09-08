@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>300</height>
+    <width>323</width>
+    <height>160</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,8 +16,8 @@
   <widget class="QPushButton" name="okay_button">
    <property name="geometry">
     <rect>
-     <x>250</x>
-     <y>230</y>
+     <x>190</x>
+     <y>100</y>
      <width>114</width>
      <height>32</height>
     </rect>
@@ -29,14 +29,17 @@
   <widget class="QLabel" name="label">
    <property name="geometry">
     <rect>
-     <x>40</x>
-     <y>40</y>
-     <width>301</width>
-     <height>131</height>
+     <x>20</x>
+     <y>20</y>
+     <width>291</width>
+     <height>71</height>
     </rect>
    </property>
    <property name="text">
-    <string>Stuff</string>
+    <string>storescu (the program used to send data to the server) was not found on your system.  Please install DCMTK (or adjust your path) before proceeding.</string>
+   </property>
+   <property name="wordWrap">
+    <bool>true</bool>
    </property>
   </widget>
  </widget>
