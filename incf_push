@@ -240,7 +240,6 @@ def parse_server_configuration(data):
     (push_host, push_port) = conf['push_target'].split(':')
     conf['push_host'] = push_host
     conf['push_port'] = push_port
-    conf['push_port'] = '8104'
     return conf
 
 #############################################################################
