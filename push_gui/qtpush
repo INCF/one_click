@@ -229,7 +229,6 @@ class LoginDialog(QtGui.QDialog):
         QtGui.QDialog.__init__(self)
         uic.loadUi('ui/login_dialog.ui', self)
         self.authenticate_button.setEnabled(False)
-        self.info_label.setText('INCF creds')
         self.app = app
         self.jsessionid = None
         return
@@ -249,7 +248,7 @@ class LoginDialog(QtGui.QDialog):
         time.sleep(1)
         if self.login_edit.text() != 'christian' \
            or self.password_edit.text() != 'ch':
-            self.info_label.setText('no good')
+            self.info_label.setText('Authentication failed')
             return
         self.jsessionid = 'jsessionid'
         self.app.get_upload_info()
