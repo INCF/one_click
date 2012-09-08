@@ -266,7 +266,7 @@ version = '%prog 2.0'
 
 description = """Upload DICOM data to the INCF data sharing server."""
 
-conf_url = 'http://localhost/conf.txt'
+conf_url = 'http://xnat.incf.org/conf.txt'
 
 deident_tags = [(0x0008, 0x0050), # Accession Number
                 (0x0008, 0x0080), # InstitutionName

@@ -1,4 +1,4 @@
 conf 1
 client_protocol 2
 xnat_base http://localhost:8080/xnat
-push_target localhost:104
+push_target xnat.incf.org:104
