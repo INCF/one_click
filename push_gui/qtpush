@@ -7,6 +7,7 @@
 
 import sys
 import os
+import string
 import subprocess
 # TODO remove this (time)
 import time
@@ -25,6 +26,16 @@ except:
     have_storescu = False
 else:
     have_storescu = True
+
+# projects[identifier] -> have permission to upload
+projects = {'christian': True, 
+            'rembrandt': False}
+
+# subjects[project] -> list of subjects
+subjects = {'christian': ['subj1', 'subj2']}
+
+# sessions[project] -> list of sessions
+sessions = {'christian': ['subj1_sess1', 'subj1_sess2']}
 
 #############################################################################
 # GUI elements
@@ -108,7 +119,96 @@ class InfoDialog(QtGui.QDialog):
     def __init__(self, app):
         QtGui.QDialog.__init__(self)
         uic.loadUi('ui/info_dialog.ui', self)
+        for edit in (self.subject_1_project_edit, 
+                     self.subject_1_subject_edit, 
+                     self.session_1_edit, 
+                     self.subject_2_project_edit, 
+                     self.subject_2_subject_edit, 
+                     self.session_2_edit):
+            self.connect(edit, 
+                         QtCore.SIGNAL('textEdited(QString)'), 
+                         self.validate)
+        self.validate()
         self.app = app
+        return
+
+    def _validate_identifier(self, identifier):
+        """Check if a project/subject/session identifier is valid.
+
+        Identifiers can only contain alphanumeric characters and underscores.
+        """
+        for c in identifier:
+            if c not in string.letters + string.digits + '_':
+                return False
+        return True
+
+    def _validate_session(self, project_id, session_edit, session_status):
+        identifier = str(session_edit.text())
+        if not identifier or not self._validate_identifier(identifier):
+            session_status.setText('bad identifier')
+            rv = False
+        elif project_id in sessions and identifier in sessions[project_id]:
+            session_status.setText('existing session')
+            rv = False
+        else:
+            session_status.setText('new session')
+            rv = True
+        return rv
+
+    def _validate_subject(self, project_id, subject_edit, subject_status, 
+                                            session_edit, session_status):
+        identifier = str(subject_edit.text())
+        if not identifier or not self._validate_identifier(identifier):
+            subject_status.setText('bad identifier')
+            rv = False
+        elif project_id in subjects and identifier in subjects[project_id]:
+            subject_status.setText('existing subject')
+            rv = True
+        else:
+            subject_status.setText('new subject')
+            rv = True
+        if not self._validate_session(project_id, session_edit, session_status):
+            return False
+        return rv
+
+    def _validate_project(self, project_edit, project_status, 
+                                subject_edit, subject_status, 
+                                session_edit, session_status):
+        identifier = str(project_edit.text())
+        if not identifier or not self._validate_identifier(identifier):
+            project_status.setText('bad identifier')
+            rv = False
+        elif identifier not in projects:
+            project_status.setText('new project')
+            rv = True
+        elif projects[identifier]:
+            project_status.setText('existing project')
+            rv = True
+        else:
+            project_status.setText('permission denied')
+            rv = False
+        if not self._validate_subject(identifier, subject_edit, subject_status, 
+                                                  session_edit, session_status):
+            return False
+        return rv
+
+    def validate(self, string=None):
+        rv1 = self._validate_project(self.subject_1_project_edit, 
+                                     self.subject_1_project_status, 
+                                     self.subject_1_subject_edit, 
+                                     self.subject_1_subject_status, 
+                                     self.session_1_edit, 
+                                     self.session_1_status)
+        rv2 = self._validate_project(self.subject_2_project_edit, 
+                                     self.subject_2_project_status, 
+                                     self.subject_2_subject_edit, 
+                                     self.subject_2_subject_status, 
+                                     self.session_2_edit, 
+                                     self.session_2_status)
+        if rv1 and rv2:
+            self.upload_button.setEnabled(True)
+        else:
+            self.upload_button.setEnabled(False)
         return
 
     def quit(self):
