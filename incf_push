@@ -61,7 +61,6 @@ class XNAT:
         if 'set-cookie' not in response:
             raise ValueError
         self.jsession_cookie = response['set-cookie'].split(';')[0]
-        print self.jsession_cookie
         self.user_name = user_name
         self._projects = None
         self._user_projects = None
