@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>376</width>
-    <height>561</height>
+    <width>378</width>
+    <height>539</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -24,6 +24,9 @@
    </property>
    <property name="text">
     <string>Upload</string>
+   </property>
+   <property name="default">
+    <bool>true</bool>
    </property>
   </widget>
   <widget class="QPushButton" name="quit_button">

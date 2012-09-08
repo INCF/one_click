@@ -37,6 +37,8 @@ subjects = {'christian': ['subj1', 'subj2']}
 # sessions[project] -> list of sessions
 sessions = {'christian': ['subj1_sess1', 'subj1_sess2']}
 
+completion_msg = """Your upload is complete.  QC will be run on your data and you will be notified by e-mail when the QC reports are ready."""
+
 #############################################################################
 # GUI elements
 #
@@ -46,34 +48,34 @@ class Application(QtGui.QApplication):
     def __init__(self, argv, have_storescu):
         QtGui.QApplication.__init__(self, argv)
         self.quit_dialog = QuitDialog(self)
+        self.pre_quit = False
         if not have_storescu:
             self.no_dcmtk_dialog = NoDCMTKDialog(self)
             self.no_dcmtk_dialog.show()
         else:
-            self.agreement_dialog = AgreementDialog(self)
-            self.agreement_dialog.show()
+            if not self.scan_files():
+                self.pre_quit = True
         return
 
     def scan_files(self):
-        self.agreement_dialog.hide()
-        paths = ['/Users/ch/Desktop/umms/data/P0196', 
-                 '/Users/ch/Desktop/umms/data/P0197-DKennedy_CANDI_08192010']
-        paths = paths[0:1]
+        paths = self.argv()[1:]
         self.file_loader = FileLoaderDialog(self, paths)
         self.file_loader.show()
         self.file_loader.scan()
         self.file_loader.read()
+        self.file_loader.hide()
         if self.file_loader.quit_called:
-            self.quit()
-        self.file_loader.hide()
-        if not self.file_loader.dicom_files:
-            self.show_exit_notice('no dicom files found, exiting')
-            self.quit()
-        self.file_loader.hide()
-        self.login()
-        return
+            return False
+        elif not self.file_loader.dicom_files:
+            self.show_exit_notice('No dicom files found.')
+            return False
+        else:
+            self.agreement_dialog = AgreementDialog(self)
+            self.agreement_dialog.show()
+        return True
 
     def login(self):
+        self.agreement_dialog.hide()
         self.login_dialog = LoginDialog(self)
         self.login_dialog.show()
         return
@@ -88,11 +90,14 @@ class Application(QtGui.QApplication):
         self.info_dialog.hide()
         self.upload_dialog = UploadDialog(self)
         self.upload_dialog.show()
+        self.upload_dialog.upload()
+        if self.upload_dialog.quit_called:
+            self.quit()
         return
 
     def finish(self):
         self.upload_dialog.hide()
-        self.show_exit_notice('done!')
+        self.show_exit_notice(completion_msg)
 
     def show_exit_notice(self, msg):
         self.exit_notice_dialog = ExitNoticeDialog(self, msg)
@@ -104,15 +109,37 @@ class UploadDialog(QtGui.QDialog):
     def __init__(self, app):
         QtGui.QDialog.__init__(self)
         uic.loadUi('ui/upload_dialog.ui', self)
-        self.info_label.setText('uploading')
-        self.progress.setRange(0, 10)
-        self.progress.setValue(5)
+        self.complete_button.setEnabled(False)
+        self.progress.setRange(0, 2000)
+        self.progress.setValue(0)
         self.app = app
         return
 
+    def upload(self):
+        self.info_label.setText('Sending subject 1 of 2...')
+        self.quit_called = False
+        for i in xrange(1000):
+            time.sleep(0.01)
+            self.progress.setValue(i+1)
+            self.app.processEvents()
+            if self.quit_called:
+                return
+        self.info_label.setText('Sending subject 2 of 2...')
+        for i in xrange(1000):
+            time.sleep(0.01)
+            self.progress.setValue(1000+i+1)
+            self.app.processEvents()
+            if self.quit_called:
+                return
+        self.stop_button.setEnabled(False)
+        self.complete_button.setEnabled(True)
+        return
+
     def quit(self):
-        # TODO confirm quit
-        self.app.quit()
+        self.app.quit_dialog.show()
+        if self.app.quit_dialog.exec_():
+            self.quit_called = True
+        return
 
     def complete(self):
         self.app.finish()
@@ -216,8 +243,10 @@ class InfoDialog(QtGui.QDialog):
         return
 
     def quit(self):
-        # TODO confirm quit
-        self.app.quit()
+        self.app.quit_dialog.show()
+        if self.app.quit_dialog.exec_():
+            self.app.quit()
+        return
 
     def upload(self):
         self.app.upload()
@@ -242,7 +271,7 @@ class LoginDialog(QtGui.QDialog):
 
     def authenticate(self):
         # TODO real authentication
-        self.info_label.setText('authenticating...')
+        self.info_label.setText('Authenticating...')
         # this will allow the label to update
         self.app.processEvents()
         time.sleep(1)
@@ -255,8 +284,10 @@ class LoginDialog(QtGui.QDialog):
         return
 
     def quit(self):
-        # TODO confirm quit
-        self.app.quit()
+        self.app.quit_dialog.show()
+        if self.app.quit_dialog.exec_():
+            self.app.quit()
+        return
 
 class ExitNoticeDialog(QtGui.QDialog):
 
@@ -304,9 +335,6 @@ class FileLoaderDialog(QtGui.QDialog):
         return
 
     def read(self):
-        # TODO: restore
-        self.dicom_files = [1,2,3]
-        return
         self.dicom_files = []
         self.progress.setMaximum(len(self.files))
         for (i, fname) in enumerate(self.files):
@@ -314,12 +342,10 @@ class FileLoaderDialog(QtGui.QDialog):
             self.status_label.setText(msg)
             self.progress.setValue(i+1)
             try:
-                print fname
                 do = dicom.read_file(fname)
             except:
                 pass
             else:
-                print 'good'
                 self.dicom_files.append(fname)
             self.app.processEvents()
             if self.quit_called:
@@ -353,18 +379,24 @@ class AgreementDialog(QtGui.QDialog):
         return
 
     def quit(self):
-        self.app.quit()
+        self.app.quit_dialog.show()
+        if self.app.quit_dialog.exec_():
+            self.app.quit()
+        return
 
     def set_agreement(self, value):
         self.continue_button.setEnabled(value)
         return
 
     def cont(self):
-        self.app.scan_files()
+        self.app.login()
         return
 
 app = Application(sys.argv, have_storescu)
 app.setApplicationName('INCF One Click Upload')
+
+if app.pre_quit:
+    sys.exit(0)
 
 sys.exit(app.exec_())
 

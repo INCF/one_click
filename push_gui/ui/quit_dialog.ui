@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>272</width>
-    <height>137</height>
+    <width>269</width>
+    <height>121</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -24,6 +24,9 @@
    </property>
    <property name="text">
     <string>Are you sure you want to quit?</string>
+   </property>
+   <property name="wordWrap">
+    <bool>true</bool>
    </property>
   </widget>
   <widget class="QPushButton" name="quit_button">
