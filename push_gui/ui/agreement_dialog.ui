@@ -16,36 +16,42 @@
   <widget class="QLabel" name="label">
    <property name="geometry">
     <rect>
-     <x>50</x>
-     <y>30</y>
-     <width>191</width>
-     <height>61</height>
+     <x>30</x>
+     <y>20</y>
+     <width>331</width>
+     <height>71</height>
     </rect>
    </property>
    <property name="text">
-    <string>Legal stuff:</string>
+    <string>You are about to upload data to the INCF neuroimaging data store.  The INCF encourages high ethical standards in data sharing, and requires you as the data provider to assert the following:</string>
+   </property>
+   <property name="wordWrap">
+    <bool>true</bool>
    </property>
   </widget>
   <widget class="QLabel" name="label_2">
    <property name="geometry">
     <rect>
-     <x>70</x>
-     <y>90</y>
-     <width>201</width>
-     <height>51</height>
+     <x>50</x>
+     <y>100</y>
+     <width>301</width>
+     <height>101</height>
     </rect>
    </property>
    <property name="text">
-    <string>I agree to stuff</string>
+    <string>I have the right to upload and share this data and I have gained local ethics approval for the sharing of this data.  I consent to this data being freely available for download.  INCF is not responsible for checking that the data meets these criteria.</string>
+   </property>
+   <property name="wordWrap">
+    <bool>true</bool>
    </property>
   </widget>
   <widget class="QWidget" name="horizontalLayoutWidget">
    <property name="geometry">
     <rect>
-     <x>100</x>
-     <y>150</y>
-     <width>207</width>
-     <height>80</height>
+     <x>216</x>
+     <y>215</y>
+     <width>161</width>
+     <height>41</height>
     </rect>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout">
@@ -68,9 +74,9 @@
   <widget class="QPushButton" name="quit_button">
    <property name="geometry">
     <rect>
-     <x>230</x>
-     <y>250</y>
-     <width>114</width>
+     <x>280</x>
+     <y>260</y>
+     <width>91</width>
      <height>32</height>
     </rect>
    </property>
@@ -97,42 +103,8 @@
     </hint>
    </hints>
   </connection>
-  <connection>
-   <sender>quit_button</sender>
-   <signal>clicked()</signal>
-   <receiver>Dialog</receiver>
-   <slot>quit()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>286</x>
-     <y>265</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>199</x>
-     <y>149</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>continue_button</sender>
-   <signal>clicked()</signal>
-   <receiver>Dialog</receiver>
-   <slot>cont()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>254</x>
-     <y>189</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>199</x>
-     <y>149</y>
-    </hint>
-   </hints>
-  </connection>
  </connections>
  <slots>
   <slot>set_agreement(bool)</slot>
-  <slot>quit()</slot>
-  <slot>cont()</slot>
  </slots>
 </ui>
