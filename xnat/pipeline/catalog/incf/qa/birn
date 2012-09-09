@@ -321,7 +321,7 @@ class QATemporaryDirectory:
         return
 
 with QATemporaryDirectory() as co:
-    co.clean = False
+#    co.clean = False
     for scan in experiment.scans():
         print scan.label()
         assessment_name = 'BIRNQA-%s' % scan.label()

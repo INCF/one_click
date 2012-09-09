@@ -121,7 +121,6 @@ def append_stats(doc, root, region, vals):
     return
 
 with QATemporaryDirectory() as co:
-    co.clean = False
     for scan in experiment.scans():
         print scan.label()
         scan_type = scan.attrs.get('type')
