@@ -1,0 +1,3 @@
+version=3
+opts="filenamemangle=s#.*release/([\d\.]+)#one_click_$1.orig.tar.gz#" \
+https://github.com/INCF/one_click/tags .*/tarball/release/(\d[\d\.]+)

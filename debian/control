@@ -1,20 +1,25 @@
-Source: incf-one-click
+Source: incf-nidash-oneclick
 Section: science
 Priority: extra
-Maintainer: Christian Haselgrove <christian.haselgrove@umassmed.edu>
-Build-Depends: debhelper (>= 7.0.50~)
-Standards-Version: 3.9.2
+Maintainer: NeuroDebian Team <team@neuro.debian.net>
+Uploaders: Christian Haselgrove <christian.haselgrove@umassmed.edu>,
+ Michael Hanke <mih@debian.org>
+Build-Depends: debhelper (>= 7.0.50~), help2man, python-dicom, python-httplib2,
+ python
+Standards-Version: 3.9.3
 Homepage: http://xnat.incf.org/
 Vcs-Git: https://github.com/INCF/one_click.git
 Vcs-Browser: https://github.com/INCF/one_click
 
-Package: incf-one-click-clients
+Package: incf-nidash-oneclick-clients
 Architecture: all
-Depends: python (>=2.5.0), 
-         python-dicom, 
+Depends: python (>=2.5.0),
+         python-dicom,
          dcmtk,
+         python-httplib2,
          ${misc:Depends}
 Description: utility for pushing DICOM data to the INCF datasharing server
- A command line utility for anonymizing and sending DICOM data to the XNAT 
+ A command line utility for anonymizing and sending DICOM data to the XNAT
  image database at the International Neuroinformatics Coordinating Facility
- (INCF).
+ (INCF). This tool is maintained by the INCF NeuroImaging DataSharing (NIDASH)
+ task force.

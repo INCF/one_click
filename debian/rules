@@ -3,5 +3,10 @@
 %:
 	dh $@
 
-clean:
-	rm -f debian/debhelper.log debian/substvars
+override_dh_auto_install:
+	dh_auto_install
+	help2man --no-discard-stderr -N -n "upload DICOM files to the INCF data sharing server" ./incf_push > $(CURDIR)/incf_push.1
+
+override_dh_auto_clean:
+	dh_auto_clean
+	rm -f incf_push.1

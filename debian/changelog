@@ -1,5 +1,5 @@
-incf-one-click (0.1-1) unstable; urgency=low
+incf-nidash-oneclick (2.0-1) unstable; urgency=low
 
-  * Initial Release
+  * Initial Release.
 
- -- Christian Haselgrove <christian.haselgrove@umassmed.edu>  Wed, 16 Nov 2011 10:16:14 -0500
+ -- Michael Hanke <mih@debian.org>  Fri, 14 Sep 2012 17:23:00 +0200
