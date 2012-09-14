@@ -1,0 +1,145 @@
+#!/bin/bash
+
+progname=`basename $0`
+version=1.0
+
+if [ $# -eq 0 ]
+then
+    echo
+    echo "usage: $progname <args>"
+    echo
+    echo "arguments (all required) are:"
+    echo
+    echo "    -host <XNAT base URL>"
+    echo "    -u <XNAT user name>"
+    echo "    -pwd <XNAT password>"
+    echo "    -project <project>"
+    echo "    -xnatId <experiment ID>"
+    echo "    -session <experiment label>"
+    echo
+    exit 1
+fi
+
+if [ x"$1" = x"--version" ]
+then
+    echo $progname $version
+    exit 0
+fi
+
+while [ $# -gt 0 ]
+do
+    if [ x"$1" = x"-host" ]
+    then
+        shift
+        if [ $# -eq 0 ]
+        then
+            echo "$progname: -host requires an argument" >&2
+            exit 1
+        fi
+        host="$1"
+    elif [ x"$1" = x"-u" ]
+    then
+        shift
+        if [ $# -eq 0 ]
+        then
+            echo "$progname: -u requires an argument" >&2
+            exit 1
+        fi
+        user="$1"
+    elif [ x"$1" = x"-pwd" ]
+    then
+        shift
+        if [ $# -eq 0 ]
+        then
+            echo "$progname: -pwd requires an argument" >&2
+            exit 1
+        fi
+        password="$1"
+    elif [ x"$1" = x"-project" ]
+    then
+        shift
+        if [ $# -eq 0 ]
+        then
+            echo "$progname: -project requires an argument" >&2
+            exit 1
+        fi
+        project="$1"
+    elif [ x"$1" = x"-xnatId" ]
+    then
+        shift
+        if [ $# -eq 0 ]
+        then
+            echo "$progname: -xnatId requires an argument" >&2
+            exit 1
+        fi
+        experiment_id="$1"
+    elif [ x"$1" = x"-session" ]
+    then
+        shift
+        if [ $# -eq 0 ]
+        then
+            echo "$progname: -session requires an argument" >&2
+            exit 1
+        fi
+        experiment_label="$1"
+    elif echo x"$1" | egrep '^x-' > /dev/null
+    then
+        echo "$progname: unknown flag \"$1\"" >&2
+        exit 1
+    else
+        echo "$progname: extra arguments" >&2
+        exit 1
+    fi
+    shift
+done
+
+if [ -z "$host" ]
+then
+    echo "$progname: no host given" >&2
+    exit 1
+fi
+
+if [ -z "$user" ]
+then
+    echo "$progname: no user given" >&2
+    exit 1
+fi
+
+if [ -z "$password" ]
+then
+    echo "$progname: no password given" >&2
+    exit 1
+fi
+
+if [ -z "$project" ]
+then
+    echo "$progname: no project given" >&2
+    exit 1
+fi
+
+if [ -z "$experiment_id" ]
+then
+    echo "$progname: no experiment ID given" >&2
+    exit 1
+fi
+
+if [ -z "$experiment_label" ]
+then
+    echo "$progname: no experiment label given" >&2
+    exit 1
+fi
+
+qa_dir=/home/ch/xnat-1.5.4/pipeline/catalog/incf/qa
+for qa in birn basic_structural
+do
+    $qa_dir/$qa $user \
+                $password \
+                $host \
+                $project \
+                $experiment_id \
+                $experiment_label
+done
+
+exit 0
+
+# eof

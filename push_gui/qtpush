@@ -1,0 +1,403 @@
+#!/usr/bin/python
+
+# See file COPYING distributed with the one_click package for the copyright
+# and license.
+
+# TODO: server configuration
+
+import sys
+import os
+import string
+import subprocess
+# TODO remove this (time)
+import time
+from PyQt4 import QtCore, QtGui, uic
+import dicom
+
+#############################################################################
+# defaults and definitions
+#
+
+try:
+    subprocess.call(['storescu'], 
+                    stdout=subprocess.PIPE, 
+                    stderr=subprocess.PIPE)
+except:
+    have_storescu = False
+else:
+    have_storescu = True
+
+# projects[identifier] -> have permission to upload
+projects = {'christian': True, 
+            'rembrandt': False}
+
+# subjects[project] -> list of subjects
+subjects = {'christian': ['subj1', 'subj2']}
+
+# sessions[project] -> list of sessions
+sessions = {'christian': ['subj1_sess1', 'subj1_sess2']}
+
+completion_msg = """Your upload is complete.  QC will be run on your data and you will be notified by e-mail when the QC reports are ready."""
+
+#############################################################################
+# GUI elements
+#
+
+class Application(QtGui.QApplication):
+
+    def __init__(self, argv, have_storescu):
+        QtGui.QApplication.__init__(self, argv)
+        self.quit_dialog = QuitDialog(self)
+        self.pre_quit = False
+        if not have_storescu:
+            self.no_dcmtk_dialog = NoDCMTKDialog(self)
+            self.no_dcmtk_dialog.show()
+        else:
+            if not self.scan_files():
+                self.pre_quit = True
+        return
+
+    def scan_files(self):
+        paths = self.argv()[1:]
+        self.file_loader = FileLoaderDialog(self, paths)
+        self.file_loader.show()
+        self.file_loader.scan()
+        self.file_loader.read()
+        self.file_loader.hide()
+        if self.file_loader.quit_called:
+            return False
+        elif not self.file_loader.dicom_files:
+            self.show_exit_notice('No dicom files found.')
+            return False
+        else:
+            self.agreement_dialog = AgreementDialog(self)
+            self.agreement_dialog.show()
+        return True
+
+    def login(self):
+        self.agreement_dialog.hide()
+        self.login_dialog = LoginDialog(self)
+        self.login_dialog.show()
+        return
+
+    def get_upload_info(self):
+        self.login_dialog.hide()
+        self.info_dialog = InfoDialog(self)
+        self.info_dialog.show()
+        return
+
+    def upload(self):
+        self.info_dialog.hide()
+        self.upload_dialog = UploadDialog(self)
+        self.upload_dialog.show()
+        self.upload_dialog.upload()
+        if self.upload_dialog.quit_called:
+            self.quit()
+        return
+
+    def finish(self):
+        self.upload_dialog.hide()
+        self.show_exit_notice(completion_msg)
+
+    def show_exit_notice(self, msg):
+        self.exit_notice_dialog = ExitNoticeDialog(self, msg)
+        self.exit_notice_dialog.exec_()
+        self.quit()
+
+class UploadDialog(QtGui.QDialog):
+
+    def __init__(self, app):
+        QtGui.QDialog.__init__(self)
+        uic.loadUi('ui/upload_dialog.ui', self)
+        self.complete_button.setEnabled(False)
+        self.progress.setRange(0, 2000)
+        self.progress.setValue(0)
+        self.app = app
+        return
+
+    def upload(self):
+        self.info_label.setText('Sending subject 1 of 2...')
+        self.quit_called = False
+        for i in xrange(1000):
+            time.sleep(0.01)
+            self.progress.setValue(i+1)
+            self.app.processEvents()
+            if self.quit_called:
+                return
+        self.info_label.setText('Sending subject 2 of 2...')
+        for i in xrange(1000):
+            time.sleep(0.01)
+            self.progress.setValue(1000+i+1)
+            self.app.processEvents()
+            if self.quit_called:
+                return
+        self.stop_button.setEnabled(False)
+        self.complete_button.setEnabled(True)
+        return
+
+    def quit(self):
+        self.app.quit_dialog.show()
+        if self.app.quit_dialog.exec_():
+            self.quit_called = True
+        return
+
+    def complete(self):
+        self.app.finish()
+        return
+
+class InfoDialog(QtGui.QDialog):
+
+    def __init__(self, app):
+        QtGui.QDialog.__init__(self)
+        uic.loadUi('ui/info_dialog.ui', self)
+        for edit in (self.subject_1_project_edit, 
+                     self.subject_1_subject_edit, 
+                     self.session_1_edit, 
+                     self.subject_2_project_edit, 
+                     self.subject_2_subject_edit, 
+                     self.session_2_edit):
+            self.connect(edit, 
+                         QtCore.SIGNAL('textEdited(QString)'), 
+                         self.validate)
+        self.validate()
+        self.app = app
+        return
+
+    def _validate_identifier(self, identifier):
+        """Check if a project/subject/session identifier is valid.
+
+        Identifiers can only contain alphanumeric characters and underscores.
+        """
+        for c in identifier:
+            if c not in string.letters + string.digits + '_':
+                return False
+        return True
+
+    def _validate_session(self, project_id, session_edit, session_status):
+        identifier = str(session_edit.text())
+        if not identifier or not self._validate_identifier(identifier):
+            session_status.setText('bad identifier')
+            rv = False
+        elif project_id in sessions and identifier in sessions[project_id]:
+            session_status.setText('existing session')
+            rv = False
+        else:
+            session_status.setText('new session')
+            rv = True
+        return rv
+
+    def _validate_subject(self, project_id, subject_edit, subject_status, 
+                                            session_edit, session_status):
+        identifier = str(subject_edit.text())
+        if not identifier or not self._validate_identifier(identifier):
+            subject_status.setText('bad identifier')
+            rv = False
+        elif project_id in subjects and identifier in subjects[project_id]:
+            subject_status.setText('existing subject')
+            rv = True
+        else:
+            subject_status.setText('new subject')
+            rv = True
+        if not self._validate_session(project_id, session_edit, session_status):
+            return False
+        return rv
+
+    def _validate_project(self, project_edit, project_status, 
+                                subject_edit, subject_status, 
+                                session_edit, session_status):
+        identifier = str(project_edit.text())
+        if not identifier or not self._validate_identifier(identifier):
+            project_status.setText('bad identifier')
+            rv = False
+        elif identifier not in projects:
+            project_status.setText('new project')
+            rv = True
+        elif projects[identifier]:
+            project_status.setText('existing project')
+            rv = True
+        else:
+            project_status.setText('permission denied')
+            rv = False
+        if not self._validate_subject(identifier, subject_edit, subject_status, 
+                                                  session_edit, session_status):
+            return False
+        return rv
+
+    def validate(self, string=None):
+        rv1 = self._validate_project(self.subject_1_project_edit, 
+                                     self.subject_1_project_status, 
+                                     self.subject_1_subject_edit, 
+                                     self.subject_1_subject_status, 
+                                     self.session_1_edit, 
+                                     self.session_1_status)
+        rv2 = self._validate_project(self.subject_2_project_edit, 
+                                     self.subject_2_project_status, 
+                                     self.subject_2_subject_edit, 
+                                     self.subject_2_subject_status, 
+                                     self.session_2_edit, 
+                                     self.session_2_status)
+        if rv1 and rv2:
+            self.upload_button.setEnabled(True)
+        else:
+            self.upload_button.setEnabled(False)
+        return
+
+    def quit(self):
+        self.app.quit_dialog.show()
+        if self.app.quit_dialog.exec_():
+            self.app.quit()
+        return
+
+    def upload(self):
+        self.app.upload()
+        return
+
+class LoginDialog(QtGui.QDialog):
+
+    def __init__(self, app):
+        QtGui.QDialog.__init__(self)
+        uic.loadUi('ui/login_dialog.ui', self)
+        self.authenticate_button.setEnabled(False)
+        self.app = app
+        self.jsessionid = None
+        return
+
+    def edit_made(self, val):
+        if self.login_edit.text() and self.password_edit.text():
+            self.authenticate_button.setEnabled(True)
+        else:
+            self.authenticate_button.setEnabled(False)
+        return
+
+    def authenticate(self):
+        # TODO real authentication
+        self.info_label.setText('Authenticating...')
+        # this will allow the label to update
+        self.app.processEvents()
+        time.sleep(1)
+        if self.login_edit.text() != 'christian' \
+           or self.password_edit.text() != 'ch':
+            self.info_label.setText('Authentication failed')
+            return
+        self.jsessionid = 'jsessionid'
+        self.app.get_upload_info()
+        return
+
+    def quit(self):
+        self.app.quit_dialog.show()
+        if self.app.quit_dialog.exec_():
+            self.app.quit()
+        return
+
+class ExitNoticeDialog(QtGui.QDialog):
+
+    def __init__(self, app, msg):
+        QtGui.QDialog.__init__(self)
+        uic.loadUi('ui/exit_notice_dialog.ui', self)
+        self.label.setText(msg)
+        self.app = app
+        return
+
+class QuitDialog(QtGui.QDialog):
+
+    def __init__(self, app):
+        QtGui.QDialog.__init__(self)
+        uic.loadUi('ui/quit_dialog.ui', self)
+        self.setModal(True)
+        self.app = app
+        return
+
+class FileLoaderDialog(QtGui.QDialog):
+
+    def __init__(self, app, paths):
+        QtGui.QDialog.__init__(self)
+        uic.loadUi('ui/file_loader_dialog.ui', self)
+        self.app = app
+        self.paths = paths
+        self.continue_button.setEnabled(False)
+        self.status_label.setText('Scanning for files...')
+        self.progress.setRange(0, 1)
+        self.progress.setValue(0)
+        self.files = []
+        self.quit_called = False
+        return
+
+    def scan(self):
+        for path in self.paths:
+            if os.path.isdir(path):
+                for (dirpath, dirnames, fnames) in os.walk(path):
+                    for f in fnames:
+                        if f == 'DICOMDIR':
+                            continue
+                        self.files.append('%s/%s' % (dirpath, f))
+            else:
+                self.files.append(path)
+        return
+
+    def read(self):
+        self.dicom_files = []
+        self.progress.setMaximum(len(self.files))
+        for (i, fname) in enumerate(self.files):
+            msg = 'Scanning files (%d of %d)...' % (i+1, len(self.files))
+            self.status_label.setText(msg)
+            self.progress.setValue(i+1)
+            try:
+                do = dicom.read_file(fname)
+            except:
+                pass
+            else:
+                self.dicom_files.append(fname)
+            self.app.processEvents()
+            if self.quit_called:
+                return
+        return
+
+    def quit(self):
+        self.app.quit_dialog.show()
+        if self.app.quit_dialog.exec_():
+            self.quit_called = True
+        return
+
+class NoDCMTKDialog(QtGui.QDialog):
+
+    def __init__(self, app):
+        QtGui.QDialog.__init__(self)
+        uic.loadUi('ui/no_dcmtk_dialog.ui', self)
+        self.app = app
+        return
+
+    def quit(self):
+        self.app.quit()
+
+class AgreementDialog(QtGui.QDialog):
+
+    def __init__(self, app):
+        QtGui.QDialog.__init__(self)
+        uic.loadUi('ui/agreement_dialog.ui', self)
+        self.continue_button.setEnabled(False)
+        self.app = app
+        return
+
+    def quit(self):
+        self.app.quit_dialog.show()
+        if self.app.quit_dialog.exec_():
+            self.app.quit()
+        return
+
+    def set_agreement(self, value):
+        self.continue_button.setEnabled(value)
+        return
+
+    def cont(self):
+        self.app.login()
+        return
+
+app = Application(sys.argv, have_storescu)
+app.setApplicationName('INCF One Click Upload')
+
+if app.pre_quit:
+    sys.exit(0)
+
+sys.exit(app.exec_())
+
+# eof

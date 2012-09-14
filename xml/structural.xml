@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<incf:StructuralQA xmlns:incf="http://xnat.incf.org/xnat" xmlns:xnat="http://nrg.wustl.edu/xnat" ID="" source_scan="1101">
+    <xnat:imageSession_ID/>
+    <StructuralQAStats region="external">
+        <RobustMinIntensity>10</RobustMinIntensity>
+        <RobustMaxIntensity>100</RobustMaxIntensity>
+        <MinIntensity>0</MinIntensity>
+        <MaxIntensity>120</MaxIntensity>
+        <MeanIntensity>50.3</MeanIntensity>
+        <StdIntensit>20.4</StdIntensit>
+        <NVoxels>1234567</NVoxels>
+        <Volume>12345.6</Volume>
+    </StructuralQAStats>
+    <StructuralQAStats region="brain">
+        <RobustMinIntensity>10</RobustMinIntensity>
+        <RobustMaxIntensity>100</RobustMaxIntensity>
+        <MinIntensity>0</MinIntensity>
+        <MaxIntensity>120</MaxIntensity>
+        <MeanIntensity>50.3</MeanIntensity>
+        <StdIntensit>20.4</StdIntensit>
+        <NVoxels>1234567</NVoxels>
+        <Volume>12345.6</Volume>
+    </StructuralQAStats>
+</incf:StructuralQA>

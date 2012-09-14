@@ -1,0 +1,106 @@
+#!/usr/bin/python
+
+import sys
+import os
+import jinja2
+import dicom
+import pyxnat
+import one_click
+
+progname = os.path.basename(sys.argv.pop(0))
+version = '1.0'
+
+if len(sys.argv) == 0:
+    print
+    print 'usage: %s <args>' % progname
+    print
+    print 'arguments (all are required) are:'
+    print
+    print '    -host <XNAT base URL>'
+    print '    -u <XNAT user name>'
+    print '    -pwd <XNAT password>'
+    print '    -project <project>'
+    print '    -xnatId <experiment ID>'
+    print '    -session <experiment label>'
+    print
+    sys.exit(1)
+
+if sys.argv[1] == '--version':
+    print '%s %s' % (progname, version)
+    sys.exit(0)
+
+arg_keys = ('host', 'u', 'pwd', 'project', 'xnatId', 'session')
+args = {}
+
+while sys.argv:
+    arg = sys.argv.pop(0)
+    if not arg.startswith('-'):
+        sys.stderr.write('%s: unexpected positional argument\n' % progname)
+        sys.stderr.write('run %s with no arguments for usage\n' % progname)
+        sys.exit(1)
+    arg = arg[1:]
+    if arg not in arg_keys:
+        sys.stderr.write('%s: unknown option "-%s"\n' % (progname, arg))
+        sys.stderr.write('run %s with no arguments for usage\n' % progname)
+        sys.exit(1)
+    if not sys.argv:
+        sys.stderr.write('%s: unknown option "-%s"\n' % (progname, arg))
+        sys.stderr.write('run %s with no arguments for usage\n' % progname)
+        sys.exit(1)
+    args[arg] = sys.argv.pop(0)
+
+for arg in arg_keys:
+    if arg not in args:
+        sys.stderr.write('%s: missing required argument "-%s"\n' % (progname, 
+                                                                    arg))
+        sys.stderr.write('run %s with no arguments for usage\n' % progname)
+        sys.exit(1)
+
+# try to find a DICOM file with the uploading user noted
+user = None
+session_dir = '/data/archive/%s/arc001/%s/SCANS' % (args['project'], 
+                                                    args['session'])
+for subdir in os.listdir(session_dir):
+    dicom_dir = '%s/%s/DICOM' % (session_dir, subdir)
+    if not os.path.isdir(dicom_dir):
+        continue
+    for fname in os.listdir(dicom_dir):
+        try:
+            do = dicom.read_file('%s/%s' % (dicom_dir, fname))
+            info = one_click.parse_study_comments(do.StudyComments)
+        except:
+            continue
+        user = info['user']
+        break
+    if user:
+        break
+
+interface = pyxnat.Interface(args['host'].rstrip('/'), args['u'], args['pwd'])
+
+if not user:
+    project = interface.select.project(args['project'])
+    users = []
+    for u in project.users():
+        if project.user_role(u) == 'owner':
+            users.append(u)
+    if not users:
+        msg = '%s: no owners found for project %s\n' % (project, 
+                                                        args['project'])
+        sys.stderr.write(msg)
+        sys.exit(1)
+
+if user:
+    emails = [ interface.manage.users.email(user) ]
+    template_name = 'done.email'
+else:
+    emails = [ interface.manage.users.email(u) for u in users ]
+    template_name = 'done_no_user.email'
+
+template = one_click.template_env.get_template(template_name)
+body = template.render(project=args['project'], session=args['session'])
+subject = 'Data upload to INCF complete'
+one_click.send_mail(emails, subject, body)
+
+sys.exit(0)
+
+# eof

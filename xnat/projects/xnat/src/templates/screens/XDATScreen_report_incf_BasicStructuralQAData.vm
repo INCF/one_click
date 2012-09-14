@@ -1,0 +1,126 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2//EN">
+$page.setTitle("BasicStructuralQA Details")
+$page.setLinkColor($ui.alink)
+$page.setVlinkColor($ui.vlink)
+#if ($turbineUtils.GetPassedParameter("popup", $data))
+	#set ($popup = $turbineUtils.GetPassedParameter("popup", data) )
+	#set ($popup = "false")
+#end
+<TABLE width="100%">
+	<TR>
+		<TD>
+			<table width="100%">
+				<TR>
+					<TD align="left" valign="middle">
+						<font face="$ui.sansSerifFonts" size="3"><b>BasicStructuralQA Details</b></font>
+					</TD>
+				</TR>
+			</TABLE>
+		</TD>
+	</TR>
+	<TR>
+		<TD>
+			<TABLE width="100%">
+				<TR>
+					<TD valign="top">
+						<TABLE>
+							<TR><TD>imageSession_ID</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/imageSession_ID")</TD></TR>
+							<TR><TD>ID</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/ID")</TD></TR>
+							<TR><TD>project</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/project")</TD></TR>
+							<TR><TD>label</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/label")</TD></TR>
+							<TR><TD>source scan</TD><TD>$!item.getStringProperty("incf:BasicStructuralQAData/source_scan[0]/source_scan")</TD></TR>
+						</TABLE>
+					</TD>
+					<TD valign="top" align="right">
+						#elementActionsBox($element $search_field $search_value $data.getSession().getAttribute("user") $item)
+					</TD>
+				</TR>
+			</TABLE>
+		</TD>
+	</TR>
+	<TR>
+		<TD>
+			SNR = $!item.getStringProperty("incf:BasicStructuralQAData/SNR")
+		</TD>
+	</TR>
+	<TR>
+		<TD>
+			<TABLE>
+				<TR>
+					<TH>Region</TH>
+					<TH>MinIntensity</TH>
+					<TH>MaxIntensity</TH>
+					<TH>RobustMinIntensity</TH>
+					<TH>RobustMaxIntensity</TH>
+					<TH>MeanIntensity</TH>
+					<TH>StdIntensity</TH>
+					<TH>NVoxels</TH>
+					<TH>Volume</TH>
+				</TR>
+				#set($incf_BasicStructuralQAStatsData_16_NUM_ROWS=$item.getChildItems("incf:BasicStructuralQAData/BasicStructuralQAStats").size() - 1)
+				#if($incf_BasicStructuralQAStatsData_16_NUM_ROWS>=0)
+					#foreach($incf_BasicStructuralQAStatsData_16_COUNTER in [0..$incf_BasicStructuralQAStatsData_16_NUM_ROWS])
+						<TR>
+<TD>$!item.getStringProperty("incf:BasicStructuralQAData/BasicStructuralQAStats[$incf_BasicStructuralQAStatsData_16_COUNTER]/region")</TD>
+<TD>$!item.getDoubleProperty("incf:BasicStructuralQAData/BasicStructuralQAStats[$incf_BasicStructuralQAStatsData_16_COUNTER]/MinIntensity")</TD>
+<TD>$!item.getDoubleProperty("incf:BasicStructuralQAData/BasicStructuralQAStats[$incf_BasicStructuralQAStatsData_16_COUNTER]/MaxIntensity")</TD>
+<TD>$!item.getDoubleProperty("incf:BasicStructuralQAData/BasicStructuralQAStats[$incf_BasicStructuralQAStatsData_16_COUNTER]/RobustMinIntensity")</TD>
+<TD>$!item.getDoubleProperty("incf:BasicStructuralQAData/BasicStructuralQAStats[$incf_BasicStructuralQAStatsData_16_COUNTER]/RobustMaxIntensity")</TD>
+<TD>$!item.getDoubleProperty("incf:BasicStructuralQAData/BasicStructuralQAStats[$incf_BasicStructuralQAStatsData_16_COUNTER]/MeanIntensity")</TD>
+<TD>$!item.getDoubleProperty("incf:BasicStructuralQAData/BasicStructuralQAStats[$incf_BasicStructuralQAStatsData_16_COUNTER]/StdIntensity")</TD>
+<TD>$!item.getDoubleProperty("incf:BasicStructuralQAData/BasicStructuralQAStats[$incf_BasicStructuralQAStatsData_16_COUNTER]/NVoxels")</TD>
+<TD>$!item.getDoubleProperty("incf:BasicStructuralQAData/BasicStructuralQAStats[$incf_BasicStructuralQAStatsData_16_COUNTER]/Volume")</TD>
+						</TR>
+
+					#end
+				#end
+			</TABLE>
+<!-- END incf:BasicStructuralQAData -->
+		</TD>
+	</TR>
+</TABLE><BR>#parse("/screens/ReportProjectSpecificFields.vm")
+
+<font face="$ui.sansSerifFonts" size="2"><b>About this Structural QA</b></font>
+
+<br/>
+<br/>
+
+<p>
+This structural quality assessment calculates image intensity statistics over white matter, gray matter, CSF, whole brain, and the region exterior to the head.  The signal to noise ratio is defined as the mean image intensity in the brain divided by the standard deviation of the image intensity external to the brain.
+</p>
+
+<br/>
+
+<p>
+<a href="http://www.fmrib.ox.ac.uk/fsl/">FSL</a> is used to classify regions in the volume and calculate statistics.
+</p>
+
+<br/>
+
+<p>
+Brain and head are determined using <code>bet image -A -m</code>.
+</p>
+
+<br/>
+
+<p>
+Tissue types are determined using <code>fast -t 1 image_brain</code>, where image_brain is an output of <code>bet</code>.
+</p>
+
+<br/>
+
+<p>
+Statistics are calculated using <code>fslstats</code>, using
+<code>-k</code>
+to mask each region, 
+<code>-R</code>
+for the minimum and maximum intensitites, 
+<code>-r</code>
+for the robust minimum and maximum intensitites, 
+<code>-m</code>
+for the mean intensity, 
+<code>-s</code>
+for the intensity standard deviation, 
+<code>-v</code>
+for the number of voxels and the volume.
+</p>

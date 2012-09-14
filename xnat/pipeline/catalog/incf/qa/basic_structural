@@ -1,0 +1,6 @@
+#!/bin/sh
+
+. /etc/fsl/4.1/fsl.sh
+exec /home/ch/xnat-1.5.4/pipeline/catalog/incf/qa/basic_structural.py "$@"
+
+# eof

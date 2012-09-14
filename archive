@@ -5,49 +5,13 @@
 
 import sys
 import os
-import psycopg2
-import ldap.filter
 import pyxnat
 import one_click
 
 progname = os.path.basename(sys.argv[0])
 
-pyxnat_server = 'http://xnat.incf.org/xnat/'
+pyxnat_server = 'http://localhost:8080/xnat'
 (pyxnat_user, pyxnat_pw) = open('/home/ch/.xnat_pw').read().strip().split(':')
-db_name = 'xnat'
-db_user = 'xnat'
-
-user_meta_data_query = """INSERT INTO xdat_user_meta_data (last_modified, 
-                                                           status, 
-                                                           activation_date, 
-                                                           insert_date, 
-                                                           modified, 
-                                                           meta_data_id, 
-                                                           shareable) 
-                          VALUES (now(), 
-                                  'active', 
-                                  now(), 
-                                  now(), 
-                                  1, 
-                                  NEXTVAL('xdat_user_meta_data_meta_data_id_seq'), 
-                                  1)"""
-
-insert_user_query = """INSERT INTO xdat_user (login, 
-                                              firstname, 
-                                              lastname, 
-                                              email, 
-                                              quarantine_path, 
-                                              enabled, 
-                                              user_info, 
-                                              xdat_user_id) 
-                       VALUES (%(login)s, 
-                               %(firstname)s, 
-                               %(lastname)s, 
-                               %(email)s, 
-                               %(quarantine_path)s, 
-                               1, 
-                               CURRVAL('xdat_user_meta_data_meta_data_id_seq'), 
-                               NEXTVAL('xdat_user_xdat_user_id_seq'))"""
 
 def handle_bad_study_comments(session, reason):
     msg = 'bad study comments (%s): %s' % (reason, str(session.study_comments))
@@ -64,82 +28,41 @@ session = one_click.Session(sys.argv[1])
 
 print 'got session %s' % str(session)
 
-if session.study_comments is None:
-    print 'no study comments'
-    handle_bad_study_comments(session, 'no study comments')
-    sys.exit(0)
-
 try:
-    (ident, user) = session.study_comments.split(':', 2)
-except ValueError:
-    print 'bad study comments'
-    handle_bad_study_comments(session, 'bad session')
+    if session.study_comments is None:
+        raise one_click.StudyCommentsError('no study comments')
+    upload_info = one_click.parse_study_comments(session.study_comments)
+except one_click.StudyCommentsError, data:
+    print 'study comments error: %s' % str(data)
+    handle_bad_study_comments(session, str(data))
     sys.exit(0)
-
-if ident.strip().lower() != 'incf':
-    print 'bad ident'
-    handle_bad_study_comments(session, 'bad ident')
-    sys.exit(0)
-
-user = user.strip()
 
 interface = pyxnat.Interface(server=pyxnat_server, 
                              user=pyxnat_user, 
                              password=pyxnat_pw)
 
-if user not in interface.manage.users():
-    print 'getting user %s in LDAP' % user
-    filter = '(uid=%s)' % ldap.filter.escape_filter_chars(user)
-    l = ldap.initialize(ldap.functions.get_option(ldap.OPT_URI))
-    l.simple_bind_s()
-    try:
-        res = l.search_s('ou=people,dc=incf,dc=org', ldap.SCOPE_SUBTREE, filter)
-        if not res:
-            print 'user not found'
-            handle_bad_study_comments(session, 'user not found')
-            sys.exit(0)
-        if len(res) > 1:
-            print 'multiple LDAP users'
-            handle_bad_study_comments(session, 'multiple LDAP users')
-            sys.exit(0)
-    finally:
-        l.unbind()
-    (dn, user_dict) = res[0]
-    db = psycopg2.connect(database=db_name, user=db_user)
-    try:
-        params = {'login': user_dict['uid'][0].lower(), 
-                  'firstname': user_dict['givenName'][0], 
-                  'lastname': user_dict['sn'][0], 
-                  'email': user_dict['mail'][0], 
-                  'quarantine_path': dn}
-        c = db.cursor()
-        c.execute(user_meta_data_query, params)
-        c.execute(insert_user_query, params)
-        c.close()
-    except:
-        db.rollback()
-        db.close()
-        raise
-    else:
-        db.commit()
-        db.close()
-    print 'user %s created in XNAT' % user
-
-project_name = 'u_%s' % user
-project = interface.select('/projects/%s' % project_name)
+project = interface.select.project(upload_info['project'])
 if not project.exists():
-    project.create()
-    project.add_user(user, role='owner')
-    project.set_accessibility('public')
-    project.remove_user(pyxnat_user)
-    print 'created project %s' % project_name
+    msg = 'unknown project %s in session %s' % (upload_info['project'], 
+                                                str(session))
+    print msg
+    one_click.report_error('unknown project', msg)
+    session.move('dead')
+    sys.exit(0)
+
+if upload_info['user'] not in project.users():
+    msg = 'user %s not in project %s' % (upload_info['user'], 
+                                         upload_info['project'])
+    print msg
+    one_click.report_error('user not in project', msg)
+    session.move('dead')
+    sys.exit(0)
 
 print 'checking deidentification'
 tags = session.check_deidentification()
-print tags
 if tags:
-    print 'HANDLE: not deidentified'
-    email = interface.manage.users.email(user)
+    print 'not deidentified'
+    email = interface.manage.users.email(upload_info['user'])
     template = one_click.template_env.get_template('not_deidentified.email')
     body = template.render(session=session, 
                            tags=tags, 
@@ -151,7 +74,7 @@ if tags:
     sys.exit(0)
 
 print 'moving session %s' % str(session)
-session.move(project_name)
+session.move(upload_info['project'])
 
 print 'archiving session %s' % str(session)
 session.archive()

@@ -16,8 +16,8 @@ import jinja2
 import dicom
 
 auth = open('/home/ch/.xnat_pw').read().strip().encode('base64').strip()
-host = 'xnat.incf.org'
-mail_host = 'luna.incf.ki.se'
+host = 'localhost'
+mail_host = 'smtp.incf.org'
 admin_email = 'xnat-admin@incf.org'
 deleted_dir = '/data/cache/DELETED'
 
@@ -58,6 +58,31 @@ class RequestError(PrearchiveError):
     def __str__(self):
         return 'RequestError: %d %s' % (self.response.status, \
                                         self.response.reason)
+
+class StudyCommentsError(Exception):
+    """bad study comments"""
+
+    def __init__(self, msg):
+        self.msg = msg
+        return
+
+    def __str__(self):
+        return self.msg
+
+def parse_study_comments(study_comments):
+    info = {}
+    # check for the one protocol we know how to parse
+    if study_comments.split('\n')[0] != 'incf 2':
+        raise StudyCommentsError('bad protocol line')
+    for line in study_comments.split('\n'):
+        (key, value) = line.split(' ', 1)
+        info[key] = value
+    for key in ('upload_agreement', 'user', 'project'):
+        if key not in info:
+            raise StudyCommentsError('missing required key %s' % key)
+    if info['upload_agreement'] != 'signed':
+        raise StudyCommentsError('missing signed upload agreement')
+    return info
 
 def send_mail(to_addrs, subject, body):
     if not isinstance(to_addrs, (tuple, list)):
@@ -111,11 +136,8 @@ class _Entry:
     def __str__(self):
         return '<prearchive entry %s>' % self.uri
 
-    def __getattr__(self, name):
-        if name == 'dicom':
-            self.dicom = dicom.read_file(self.path, stop_before_pixels=True)
-            return self.dicom
-        raise AttributeError, "_Entry instance has no attribute '%s'" % name
+    def read_dicom(self):
+        return dicom.read_file(self.path)
 
 class _File:
 
@@ -233,7 +255,7 @@ class Session:
                     continue
                 for entry in f.entries:
                     try:
-                        val = entry.dicom.StudyComments
+                        val = entry.read_dicom().StudyComments
                     except:
                         pass
                     else:
@@ -279,7 +301,7 @@ class Session:
 
     def archive(self):
         """archive a session"""
-        body = urllib.urlencode({'src': self.url})
+        body = urllib.urlencode({'src': self.url, 'overwrite': 'append'})
         request('POST', '/data/services/archive', body)
         return
 
@@ -293,8 +315,9 @@ class Session:
                 if f.format != 'DICOM':
                     continue
                 for entry in f.entries:
+                    do = entry.read_dicom()
                     for tag in deident_tags:
-                        if tag in entry.dicom:
+                        if tag in do:
                             tags.add(tag)
         tags = list(tags)
         tags.sort()

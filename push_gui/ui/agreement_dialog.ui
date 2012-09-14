@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Dialog</class>
+ <widget class="QDialog" name="Dialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>400</width>
+    <height>300</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Dialog</string>
+  </property>
+  <widget class="QLabel" name="label">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>20</y>
+     <width>331</width>
+     <height>71</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>You are about to upload data to the INCF neuroimaging data store.  The INCF encourages high ethical standards in data sharing, and requires you as the data provider to assert the following:</string>
+   </property>
+   <property name="wordWrap">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_2">
+   <property name="geometry">
+    <rect>
+     <x>50</x>
+     <y>100</y>
+     <width>301</width>
+     <height>101</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>I have the right to upload and share this data and I have gained local ethics approval for the sharing of this data.  I consent to this data being freely available for download.  INCF is not responsible for checking that the data meets these criteria.</string>
+   </property>
+   <property name="wordWrap">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QWidget" name="horizontalLayoutWidget">
+   <property name="geometry">
+    <rect>
+     <x>221</x>
+     <y>215</y>
+     <width>161</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <item>
+     <widget class="QCheckBox" name="checkBox">
+      <property name="text">
+       <string>I agree</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="continue_button">
+      <property name="text">
+       <string>Continue</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QPushButton" name="quit_button">
+   <property name="geometry">
+    <rect>
+     <x>290</x>
+     <y>260</y>
+     <width>91</width>
+     <height>32</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Quit</string>
+   </property>
+  </widget>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>checkBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>Dialog</receiver>
+   <slot>set_agreement(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>151</x>
+     <y>187</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>199</x>
+     <y>149</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>quit_button</sender>
+   <signal>clicked()</signal>
+   <receiver>Dialog</receiver>
+   <slot>quit()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>335</x>
+     <y>275</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>199</x>
+     <y>149</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>continue_button</sender>
+   <signal>clicked()</signal>
+   <receiver>Dialog</receiver>
+   <slot>cont()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>334</x>
+     <y>234</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>199</x>
+     <y>149</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>set_agreement(bool)</slot>
+  <slot>quit()</slot>
+  <slot>cont()</slot>
+ </slots>
+</ui>

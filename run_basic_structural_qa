@@ -1,0 +1,22 @@
+#!/bin/sh
+
+set -e
+
+bet anat anat_brain -A -m
+fslmaths anat_brain_outskin_mask -sub 1 -mul -1 external
+fast -t 1 anat_brain
+fslstats anat -k external.nii.gz -R -r -m -s -v > stats.external
+fslstats anat -k anat_brain_mask -R -r -m -s -v > stats.brain
+
+fslmaths anat_brain_seg -thr 1 -uthr 1 -bin csf
+fslstats anat -k csf -R -r -m -s -v > stats.csf
+
+fslmaths anat_brain_seg -thr 2 -uthr 2 -bin gm
+fslstats anat -k gm -R -r -m -s -v > stats.gm
+
+fslmaths anat_brain_seg -thr 3 -uthr 3 -bin wm
+fslstats anat -k wm -R -r -m -s -v > stats.wm
+
+exit 0
+
+# eof
