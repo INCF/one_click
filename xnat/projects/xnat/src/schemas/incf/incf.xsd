@@ -14,6 +14,128 @@
         </xs:complexContent>
     </xs:complexType>
 
+    <xs:element name="DTIPrepQA" type="incf:DTIPrepQAData"/>
+    <xs:complexType name="DTIPrepQAData">
+        <xs:complexContent>
+            <xs:extension base="incf:BaseQAAssessorData">
+                <xs:sequence>
+                    <xs:element name="Summary" type="incf:SummaryData"/>
+                    <xs:element name="Info" type="incf:InfoData"/>
+                    <xs:element name="SlicewiseArtifacts" type="incf:SlicewiseArtifactsData"/>
+                    <xs:element name="Gradients" type="incf:GradientsData"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+    <xs:complexType name="SummaryData">
+        <xs:sequence>
+            <xs:element name="ImageOriginCheck" type="xs:string"/>
+            <xs:element name="ImageSpaceCheck" type="xs:string"/>
+            <xs:element name="ImageSpacedDirectionCheck" type="xs:string"/>
+            <xs:element name="ImageSpacingCheck" type="xs:string"/>
+            <xs:element name="ImageSizeCheck" type="xs:string"/>
+            <xs:element name="ImageGradientCheck" type="xs:string"/>
+            <xs:element name="DiffusionMeasurementFrameCheck" type="xs:string"/>
+            <xs:element name="DiffusionSlicewiseCheck" type="xs:string"/>
+            <xs:element name="DWIInterlacewiseCheck" type="xs:string"/>
+            <xs:element name="DWIGradientwiseCheck" type="xs:string"/>
+            <xs:element name="Notes" type="incf:NotesData"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="NotesData">
+        <xs:sequence>
+            <xs:element name="Note" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="InfoData">
+        <xs:sequence>
+            <xs:element name="SlicewiseParameters" type="incf:SlicewiseParametersData"/>
+            <xs:element name="GradientDirections" type="incf:GradientDirectionsData"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="SlicewiseParametersData">
+        <xs:sequence>
+            <xs:element name="CheckTimes" type="xs:integer"/>
+            <xs:element name="BaselineStdevTimes" type="xs:integer"/>
+            <xs:element name="HeadSkipRation" type="xs:float"/>
+            <xs:element name="GradientStdevTimes" type="xs:float"/>
+            <xs:element name="TailSkipRatio" type="xs:float"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="GradientDirectionsData">
+        <xs:sequence>
+            <xs:element name="GradientDirection" type="incf:GradientDirectionData" minOccurs="1" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="GradientDirectionData">
+        <xs:attribute name="number" type="xs:integer"/>
+    </xs:complexType>
+    <xs:complexType name="SlicewiseArtifactsData">
+        <xs:sequence>
+            <xs:element name="SlicewiseArtifact" type="incf:SlicewiseArtifactData" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="SlicewiseArtifactData">
+        <xs:sequence>
+            <xs:element name="Gradient" type="xs:integer"/>
+            <xs:element name="Region" type="xs:string"/>
+            <xs:element name="Slice" type="xs:integer"/>
+            <xs:element name="Correlation" type="xs:float"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="Gradients">
+        <xs:sequence>
+            <xs:element name="Gradient" type="incf:GradientData" minOccurs="1" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="Gradient">
+        <xs:sequence>
+            <xs:element name="Processing" type="xs:string"/>
+            <xs:element name="OriginalDir" type="xs:string"/>
+            <xs:element name="ReplacedDir" type="xs:string"/>
+            <xs:element name="CorrectedDir" type="xs:string"/>
+            <xs:element name="SliceExcludes" type="incf:SliceExcludesData"/>
+            <xs:element name="InterlacewiseCheck" type="incf:InterlacewiseCheckData"/>
+            <xs:element name="GradientWiseCheck" type="incf:GradientWiseCheckData"/>
+            <xs:element name="QCIndex" type="xs:integer"/>
+        </xs:sequence>
+        <xs:attribute name="number" type="xs:integer"/>
+    </xs:complexType>
+    <xs:complexType name="SliceExcludesData">
+        <xs:sequence>
+            <xs:element name="SliceExclude" type="incf:SliceExcludeData" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="SliceExcludeData">
+        <xs:sequence>
+            <xs:element name="Slice" type="xs:integer"/>
+            <xs:element name="Correlation" type="xs:float"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="InterlacewiseCheckData">
+        <xs:sequence>
+            <xs:element name="InterlaceAngleX" type="xs:float"/>
+            <xs:element name="InterlaceAngleY" type="xs:float"/>
+            <xs:element name="InterlaceAngleZ" type="xs:float"/>
+            <xs:element name="InterlaceTranslationX" type="xs:float"/>
+            <xs:element name="InterlaceTranslationY" type="xs:float"/>
+            <xs:element name="InterlaceTranslationZ" type="xs:float"/>
+            <xs:element name="InterlaceMetric" type="xs:float"/>
+            <xs:element name="InterlaceCorrelationBaseline" type="xs:float"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="GradientWiseCheckData">
+        <xs:sequence>
+            <xs:element name="GradientAngleX" type="xs:float"/>
+            <xs:element name="GradientAngleY" type="xs:float"/>
+            <xs:element name="GradientAngleZ" type="xs:float"/>
+            <xs:element name="GradientTranslationX" type="xs:float"/>
+            <xs:element name="GradientTranslationY" type="xs:float"/>
+            <xs:element name="GradientTranslationZ" type="xs:float"/>
+            <xs:element name="GradientMetric" type="xs:float"/>
+        </xs:sequence>
+    </xs:complexType>
+
     <xs:element name="BIRNfMRIQA" type="incf:BIRNfMRIQAData"/>
     <xs:complexType name="BIRNfMRIQAData">
         <xs:complexContent>
