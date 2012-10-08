@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema targetNamespace="http://xnat.incf.org/xnat" xmlns:incf="http://xnat.incf.org/xnat" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xnat="http://nrg.wustl.edu/xnat"> 
-
     <xs:import namespace="http://nrg.wustl.edu/xnat" schemaLocation="../xnat/xnat.xsd"/>
-
     <xs:element name="BaseQAAssessor" type="incf:BaseQAAssessorData"/>
     <xs:complexType name="BaseQAAssessorData">
         <xs:complexContent>
@@ -13,7 +11,6 @@
             </xs:extension>
         </xs:complexContent>
     </xs:complexType>
-
     <xs:element name="DTIPrepQA" type="incf:DTIPrepQAData"/>
     <xs:complexType name="DTIPrepQAData">
         <xs:complexContent>
@@ -68,7 +65,11 @@
         </xs:sequence>
     </xs:complexType>
     <xs:complexType name="GradientDirectionData">
-        <xs:attribute name="number" type="xs:integer"/>
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="number" type="xs:integer"/>
+            </xs:extension>
+        </xs:simpleContent>
     </xs:complexType>
     <xs:complexType name="SlicewiseArtifactsData">
         <xs:sequence>
@@ -83,12 +84,12 @@
             <xs:element name="Correlation" type="xs:float"/>
         </xs:sequence>
     </xs:complexType>
-    <xs:complexType name="Gradients">
+    <xs:complexType name="GradientsData">
         <xs:sequence>
             <xs:element name="Gradient" type="incf:GradientData" minOccurs="1" maxOccurs="unbounded"/>
         </xs:sequence>
     </xs:complexType>
-    <xs:complexType name="Gradient">
+    <xs:complexType name="GradientData">
         <xs:sequence>
             <xs:element name="Processing" type="xs:string"/>
             <xs:element name="OriginalDir" type="xs:string"/>
@@ -96,7 +97,7 @@
             <xs:element name="CorrectedDir" type="xs:string"/>
             <xs:element name="SliceExcludes" type="incf:SliceExcludesData"/>
             <xs:element name="InterlacewiseCheck" type="incf:InterlacewiseCheckData"/>
-            <xs:element name="GradientWiseCheck" type="incf:GradientWiseCheckData"/>
+            <xs:element name="GradientwiseCheck" type="incf:GradientwiseCheckData"/>
             <xs:element name="QCIndex" type="xs:integer"/>
         </xs:sequence>
         <xs:attribute name="number" type="xs:integer"/>
@@ -124,7 +125,7 @@
             <xs:element name="InterlaceCorrelationBaseline" type="xs:float"/>
         </xs:sequence>
     </xs:complexType>
-    <xs:complexType name="GradientWiseCheckData">
+    <xs:complexType name="GradientwiseCheckData">
         <xs:sequence>
             <xs:element name="GradientAngleX" type="xs:float"/>
             <xs:element name="GradientAngleY" type="xs:float"/>
@@ -135,7 +136,6 @@
             <xs:element name="GradientMetric" type="xs:float"/>
         </xs:sequence>
     </xs:complexType>
-
     <xs:element name="BIRNfMRIQA" type="incf:BIRNfMRIQAData"/>
     <xs:complexType name="BIRNfMRIQAData">
         <xs:complexContent>
@@ -200,12 +200,10 @@
         <xs:attribute name="individual" type="xs:integer"/>
         <xs:attribute name="rel_grand_mean" type="xs:integer"/>
     </xs:complexType>
-
     <xs:complexType name="BIRNfMRIQAValuesData">
         <xs:attribute name="absolute_mean" type="xs:float"/>
         <xs:attribute name="relative_mean" type="xs:float"/>
     </xs:complexType>
-
     <xs:element name="BasicStructuralQA" type="incf:BasicStructuralQAData"/>
     <xs:complexType name="BasicStructuralQAData">
         <xs:complexContent>
@@ -230,5 +228,4 @@
         </xs:all>
         <xs:attribute name="region" type="xs:string"/>
     </xs:complexType>
-
 </xs:schema>
