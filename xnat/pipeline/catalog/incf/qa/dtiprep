@@ -1,7 +1,36 @@
 #!/usr/bin/python
 
 import sys
+import os
+import tempfile
+import datetime
+import shutil
+import subprocess
 import xml.dom.minidom
+import pyxnat
+
+class QATemporaryDirectory:
+
+    def __enter__(self):
+        self.path = tempfile.mkdtemp()
+        self.clean = True
+        fo = open('%s/info' % self.path, 'w')
+        fo.write('%s\n' % sys.argv[0])
+        fo.write('%s\n' % str(datetime.datetime.now()))
+        fo.close()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.clean:
+            shutil.rmtree(self.path)
+        print 'leaving %s' % self.path
+        return
+
+def append_text_element(doc, parent, name, value):
+    el = doc.createElement(name)
+    el.appendChild(doc.createTextNode(value))
+    parent.appendChild(el)
+    return
 
 class DTIPrepQCReportReader:
 
@@ -162,216 +191,296 @@ def process_swc(el):
             sc = None
     return d
 
-doc = xml.dom.minidom.parseString(open('600_XMLQCResult.xml').read())
-top = doc.getElementsByTagName('QCResultSettings')[0]
-xml_data = process_entry(top)
+progname = os.path.basename(sys.argv[0])
 
-txt_data = DTIPrepQCReportReader(open('2.txt'))
+if len(sys.argv) != 7:
+    print 'usage: %s <user> <password> <XNAT URL> <project> <experiment ID> <experiment label>' % progname
+    sys.exit(0)
 
-def append_text_element(doc, parent, name, value):
-    el = doc.createElement(name)
-    el.appendChild(doc.createTextNode(value))
-    parent.appendChild(el)
-    return
+user = sys.argv[1]
+password = sys.argv[2]
+host = sys.argv[3].rstrip('/')
+project_name = sys.argv[4]
+experiment_id = sys.argv[5]
+experiment_label = sys.argv[6]
 
-doc = xml.dom.minidom.Document()
-root = doc.createElement('incf:DTIPrepQA')
-doc.appendChild(root)
-root.setAttribute('xmlns:incf', 'http://xnat.incf.org/xnat')
-root.setAttribute('xmlns:xnat', 'http://nrg.wustl.edu/xnat')
-root.setAttribute('ID', '')
+interface = pyxnat.Interface(host, user, password)
 
-#append_text_element(doc, root, 'xnat:imageSession_ID', experiment_id)
-#append_text_element(doc, root, 'source_scan', scan.label())
+# interface.select() will return an iterable that doesn't support indexing, so 
+# we have to be explicit here
+experiment = None
+for e in interface.select('/experiments/%s' % experiment_id):
+    if e.exists():
+        experiment = e
+if not experiment:
+    sys.stderr.write('%s: can\'t find experiment %s\n' % (progname, 
+                                                          experiment_id))
+    sys.exit(1)
 
-summary = doc.createElement('Summary')
-append_text_element(doc, 
-                    summary, 
-                    'ImageOriginCheck', 
-                    xml_data['ImageInformation']['origin'])
-append_text_element(doc, 
-                    summary, 
-                    'ImageSpaceCheck', 
-                    xml_data['ImageInformation']['space'])
-append_text_element(doc, 
-                    summary, 
-                    'ImageSpacedDirectionCheck', 
-                    xml_data['ImageInformation']['spacedirection'])
-append_text_element(doc, 
-                    summary, 
-                    'ImageSpacingCheck', 
-                    xml_data['ImageInformation']['spacing'])
-append_text_element(doc, 
-                    summary, 
-                    'ImageSizeCheck', 
-                    xml_data['ImageInformation']['size'])
-append_text_element(doc, 
-                    summary, 
-                    'ImageGradientCheck', 
-                    xml_data['DiffusionInformation']['gradient'])
-append_text_element(doc, 
-                    summary, 
-                    'DiffusionMeasurementFrameCheck', 
-                    xml_data['DiffusionInformation']['measurementFrame'])
-append_text_element(doc, 
-                    summary, 
-                    'DiffusionSlicewiseCheck', 
-                    xml_data['DWI Check']['SliceWiseCheck'])
-append_text_element(doc, 
-                    summary, 
-                    'DWIInterlacewiseCheck', 
-                    xml_data['DWI Check']['InterlaceWiseCheck'])
-append_text_element(doc, 
-                    summary, 
-                    'DWIGradientwiseCheck', 
-                    xml_data['DWI Check']['GradientWiseCheck'])
-root.appendChild(summary)
+data_dir = '/data/archive/%s/arc001/%s' % (project_name, experiment_label)
 
-notes = doc.createElement('Notes')
-for note in txt_data.summary:
-    append_text_element(doc, notes, 'Note', note)
-summary.appendChild(notes)
+with QATemporaryDirectory() as co:
+#    co.clean = False
+    for scan in experiment.scans():
+        print scan.label()
+        assessment_name = 'DTIPrepQA-%s' % scan.label()
+        assessment = experiment.assessor(assessment_name)
+        if assessment.exists():
+            print 'assessment %s exists; skipping' % assessment_name
+            continue
+        nrrd_res_dir = '%s/SCANS/%s/NRRD' % (data_dir, scan.label())
+        if not os.path.isdir(nrrd_res_dir):
+            print 'no NRRD for %s' % scan.label()
+            continue
+        src_nrrd_fname = None
+        for fname in os.listdir(nrrd_res_dir):
+            if fname.endswith('.nrrd'):
+                src_nrrd_fname = '%s/%s' % (nrrd_res_dir, fname)
+        if not src_nrrd_fname:
+            print 'no NRRD for %s' % scan.label()
+            continue
+        scan_tempdir = '%s/%s' % (co.path, scan.label())
+        os.mkdir(scan_tempdir)
+        base_nrrd_fname = os.path.basename(src_nrrd_fname)
+        nrrd_fname = '%s/%s' % (scan_tempdir, base_nrrd_fname)
+        shutil.copy(src_nrrd_fname, scan_tempdir)
+        os.chdir(scan_tempdir)
+        args = ['/home/ch/bin/DTIPrep', 
+                '-w', 
+                base_nrrd_fname, 
+                '-p', 
+                'default', 
+                '-d', 
+                '-c']
+        try:
+            subprocess.check_call(args)
+        except subprocess.CalledProcessError, data:
+            print str(data)
+            continue
 
-info = doc.createElement('Info')
+        xml_fname = '%s_XMLQCResult.xml' % scan.label()
+        doc = xml.dom.minidom.parseString(open(xml_fname).read())
+        top = doc.getElementsByTagName('QCResultSettings')[0]
+        xml_data = process_entry(top)
 
-slicewise_parameters = doc.createElement('SlicewiseParameters')
-append_text_element(doc, 
-                    slicewise_parameters, 
-                    'CheckTimes', 
-                    txt_data.slicewise_parameters['CheckTimes'])
-append_text_element(doc, 
-                    slicewise_parameters, 
-                    'BaselineStdevTimes', 
-                    txt_data.slicewise_parameters['BaselineStdevTimes'])
-append_text_element(doc, 
-                    slicewise_parameters, 
-                    'HeadSkipRation', 
-                    txt_data.slicewise_parameters['HeadSkipRatio'])
-append_text_element(doc, 
-                    slicewise_parameters, 
-                    'GradientStdevTimes', 
-                    txt_data.slicewise_parameters['GradientStdevTimes'])
-append_text_element(doc, 
-                    slicewise_parameters, 
-                    'TailSkipRatio', 
-                    txt_data.slicewise_parameters['TailSkipRatio'])
-info.appendChild(slicewise_parameters)
+        txt_data = DTIPrepQCReportReader(open('%s_QCReport.txt' % scan.label()))
 
-gradient_directions = doc.createElement('GradientDirections')
-for gradient in sorted(txt_data.gradient_directions):
-    el = doc.createElement('GradientDirection')
-    value = ' '.join(txt_data.gradient_directions[gradient])
-    el.appendChild(doc.createTextNode(value))
-    el.setAttribute('number', str(gradient))
-    gradient_directions.appendChild(el)
-info.appendChild(gradient_directions)
+        doc = xml.dom.minidom.Document()
+        root = doc.createElement('incf:DTIPrepQA')
+        doc.appendChild(root)
+        root.setAttribute('xmlns:incf', 'http://xnat.incf.org/xnat')
+        root.setAttribute('xmlns:xnat', 'http://nrg.wustl.edu/xnat')
+        root.setAttribute('ID', '')
 
-root.appendChild(info)
+        append_text_element(doc, root, 'xnat:imageSession_ID', experiment_id)
+        append_text_element(doc, root, 'source_scan', scan.label())
 
-slicewise_artifacts = doc.createElement('SlicewiseArtifacts')
-for d in txt_data.slicewise_artifacts:
-    el = doc.createElement('SlicewiseArtifact')
-    append_text_element(doc, el, 'Gradient', d['gradient'])
-    append_text_element(doc, el, 'Region', d['region'])
-    append_text_element(doc, el, 'Slice', d['slice'])
-    append_text_element(doc, el, 'Correlation', d['correlation'])
-    slicewise_artifacts.appendChild(el)
+        summary = doc.createElement('Summary')
+        append_text_element(doc, 
+                            summary, 
+                            'ImageOriginCheck', 
+                            xml_data['ImageInformation']['origin'])
+        append_text_element(doc, 
+                            summary, 
+                            'ImageSpaceCheck', 
+                            xml_data['ImageInformation']['space'])
+        append_text_element(doc, 
+                            summary, 
+                            'ImageSpacedDirectionCheck', 
+                            xml_data['ImageInformation']['spacedirection'])
+        append_text_element(doc, 
+                            summary, 
+                            'ImageSpacingCheck', 
+                            xml_data['ImageInformation']['spacing'])
+        append_text_element(doc, 
+                            summary, 
+                            'ImageSizeCheck', 
+                            xml_data['ImageInformation']['size'])
+        append_text_element(doc, 
+                            summary, 
+                            'ImageGradientCheck', 
+                            xml_data['DiffusionInformation']['gradient'])
+        append_text_element(doc, 
+                            summary, 
+                            'DiffusionMeasurementFrameCheck', 
+                            xml_data['DiffusionInformation']['measurementFrame'])
+        append_text_element(doc, 
+                            summary, 
+                            'DiffusionSlicewiseCheck', 
+                            xml_data['DWI Check']['SliceWiseCheck'])
+        append_text_element(doc, 
+                            summary, 
+                            'DWIInterlacewiseCheck', 
+                            xml_data['DWI Check']['InterlaceWiseCheck'])
+        append_text_element(doc, 
+                            summary, 
+                            'DWIGradientwiseCheck', 
+                            xml_data['DWI Check']['GradientWiseCheck'])
+        root.appendChild(summary)
 
-root.appendChild(slicewise_artifacts)
+        if txt_data.summary:
+            notes = doc.createElement('Notes')
+            for note in txt_data.summary:
+                append_text_element(doc, notes, 'Note', note)
+            summary.appendChild(notes)
 
-gradients = doc.createElement('Gradients')
+        info = doc.createElement('Info')
 
-for gradient_number in sorted(xml_data['DWI Check']['gradients']):
-    d = xml_data['DWI Check']['gradients'][gradient_number]
-    gradient = doc.createElement('Gradient')
-    gradient.setAttribute('number', str(gradient_number))
-    append_text_element(doc, gradient, 'Processing', d['processing'])
-    append_text_element(doc, gradient, 'OriginalDir', d['OriginalDir'])
-    append_text_element(doc, gradient, 'ReplacedDir', d['ReplacedDir'])
-    append_text_element(doc, gradient, 'CorrectedDir', d['CorrectedDir'])
-    slice_excludes = doc.createElement('SliceExcludes')
-    for e in d['SliceWiseCheck']['excludes']:
-        slice_exclude = doc.createElement('SliceExclude')
-        append_text_element(doc, slice_exclude, 'Slice', e[0])
-        append_text_element(doc, slice_exclude, 'Correlation', e[1])
-        slice_excludes.appendChild(slice_exclude)
-    gradient.appendChild(slice_excludes)
-    interlacewise_check = doc.createElement('InterlacewiseCheck')
-    append_text_element(doc, 
-                        interlacewise_check, 
-                        'InterlaceAngleX', 
-                        d['InterlaceWiseCheck']['InterlaceAngleX'])
-    append_text_element(doc, 
-                        interlacewise_check, 
-                        'InterlaceAngleY', 
-                        d['InterlaceWiseCheck']['InterlaceAngleY'])
-    append_text_element(doc, 
-                        interlacewise_check, 
-                        'InterlaceAngleZ', 
-                        d['InterlaceWiseCheck']['InterlaceAngleZ'])
-    append_text_element(doc, 
-                        interlacewise_check, 
-                        'InterlaceTranslationX', 
-                        d['InterlaceWiseCheck']['InterlaceTranslationX'])
-    append_text_element(doc, 
-                        interlacewise_check, 
-                        'InterlaceTranslationY', 
-                        d['InterlaceWiseCheck']['InterlaceTranslationY'])
-    append_text_element(doc, 
-                        interlacewise_check, 
-                        'InterlaceTranslationZ', 
-                        d['InterlaceWiseCheck']['InterlaceTranslationZ'])
-    append_text_element(doc, 
-                        interlacewise_check, 
-                        'InterlaceMetric', 
-                        d['InterlaceWiseCheck']['InterlaceMetric(MI)'])
-    if gradient_number == 0:
-        corr = d['InterlaceWiseCheck']['InterlaceCorrelation_Baseline']
-    else:
-        corr = d['InterlaceWiseCheck']['InterlaceCorrelation']
-    append_text_element(doc, 
-                        interlacewise_check, 
-                        'InterlaceCorrelationBaseline', 
-                        corr)
-    gradient.appendChild(interlacewise_check)
-    gradientwise_check = doc.createElement('GradientwiseCheck')
-    append_text_element(doc, 
-                        gradientwise_check, 
-                        'GradientAngleX', 
-                        d['GradientWiseCheck']['GradientAngleX'])
-    append_text_element(doc, 
-                        gradientwise_check, 
-                        'GradientAngleY', 
-                        d['GradientWiseCheck']['GradientAngleY'])
-    append_text_element(doc, 
-                        gradientwise_check, 
-                        'GradientAngleZ', 
-                        d['GradientWiseCheck']['GradientAngleZ'])
-    append_text_element(doc, 
-                        gradientwise_check, 
-                        'GradientTranslationX', 
-                        d['GradientWiseCheck']['GradientTranslationX'])
-    append_text_element(doc, 
-                        gradientwise_check, 
-                        'GradientTranslationY', 
-                        d['GradientWiseCheck']['GradientTranslationY'])
-    append_text_element(doc, 
-                        gradientwise_check, 
-                        'GradientTranslationZ', 
-                        d['GradientWiseCheck']['GradientTranslationZ'])
-    append_text_element(doc, 
-                        gradientwise_check, 
-                        'GradientMetric', 
-                        d['GradientWiseCheck']['GradientMetric(MI)'])
-    gradient.appendChild(gradientwise_check)
+        slicewise_parameters = doc.createElement('SlicewiseParameters')
+        append_text_element(doc, 
+                            slicewise_parameters, 
+                            'CheckTimes', 
+                            txt_data.slicewise_parameters['CheckTimes'])
+        append_text_element(doc, 
+                            slicewise_parameters, 
+                            'BaselineStdevTimes', 
+                            txt_data.slicewise_parameters['BaselineStdevTimes'])
+        append_text_element(doc, 
+                            slicewise_parameters, 
+                            'HeadSkipRatio', 
+                            txt_data.slicewise_parameters['HeadSkipRatio'])
+        append_text_element(doc, 
+                            slicewise_parameters, 
+                            'GradientStdevTimes', 
+                            txt_data.slicewise_parameters['GradientStdevTimes'])
+        append_text_element(doc, 
+                            slicewise_parameters, 
+                            'TailSkipRatio', 
+                            txt_data.slicewise_parameters['TailSkipRatio'])
+        info.appendChild(slicewise_parameters)
 
-    append_text_element(doc, gradient, 'QCIndex', d['QC_Index'])
+        gradient_directions = doc.createElement('GradientDirections')
+        for gradient in sorted(txt_data.gradient_directions):
+            el = doc.createElement('GradientDirection')
+            value = ' '.join(txt_data.gradient_directions[gradient])
+            el.appendChild(doc.createTextNode(value))
+            el.setAttribute('number', str(gradient))
+            gradient_directions.appendChild(el)
+        info.appendChild(gradient_directions)
 
-    gradients.appendChild(gradient)
+        root.appendChild(info)
 
-root.appendChild(gradients)
+        if txt_data.slicewise_artifacts:
+            slicewise_artifacts = doc.createElement('SlicewiseArtifacts')
+            for d in txt_data.slicewise_artifacts:
+                el = doc.createElement('SlicewiseArtifact')
+                append_text_element(doc, el, 'Gradient', d['gradient'])
+                append_text_element(doc, el, 'Region', d['region'])
+                append_text_element(doc, el, 'Slice', d['slice'])
+                append_text_element(doc, el, 'Correlation', d['correlation'])
+                slicewise_artifacts.appendChild(el)
+            root.appendChild(slicewise_artifacts)
 
-print doc.toprettyxml()
+        gradients = doc.createElement('Gradients')
+
+        for gradient_number in sorted(xml_data['DWI Check']['gradients']):
+            d = xml_data['DWI Check']['gradients'][gradient_number]
+            gradient = doc.createElement('Gradient')
+            gradient.setAttribute('number', str(gradient_number))
+            append_text_element(doc, gradient, 'Processing', d['processing'])
+            append_text_element(doc, gradient, 'OriginalDir', d['OriginalDir'])
+            append_text_element(doc, gradient, 'ReplacedDir', d['ReplacedDir'])
+            append_text_element(doc, gradient, 'CorrectedDir', d['CorrectedDir'])
+            if d['SliceWiseCheck']['excludes']:
+                slice_excludes = doc.createElement('SliceExcludes')
+                for e in d['SliceWiseCheck']['excludes']:
+                    slice_exclude = doc.createElement('SliceExclude')
+                    append_text_element(doc, slice_exclude, 'Slice', e[0])
+                    append_text_element(doc, slice_exclude, 'Correlation', e[1])
+                    slice_excludes.appendChild(slice_exclude)
+                gradient.appendChild(slice_excludes)
+            interlacewise_check = doc.createElement('InterlacewiseCheck')
+            append_text_element(doc, 
+                                interlacewise_check, 
+                                'InterlaceAngleX', 
+                                d['InterlaceWiseCheck']['InterlaceAngleX'])
+            append_text_element(doc, 
+                                interlacewise_check, 
+                                'InterlaceAngleY', 
+                                d['InterlaceWiseCheck']['InterlaceAngleY'])
+            append_text_element(doc, 
+                                interlacewise_check, 
+                                'InterlaceAngleZ', 
+                                d['InterlaceWiseCheck']['InterlaceAngleZ'])
+            append_text_element(doc, 
+                                interlacewise_check, 
+                                'InterlaceTranslationX', 
+                                d['InterlaceWiseCheck']['InterlaceTranslationX'])
+            append_text_element(doc, 
+                                interlacewise_check, 
+                                'InterlaceTranslationY', 
+                                d['InterlaceWiseCheck']['InterlaceTranslationY'])
+            append_text_element(doc, 
+                                interlacewise_check, 
+                                'InterlaceTranslationZ', 
+                                d['InterlaceWiseCheck']['InterlaceTranslationZ'])
+            append_text_element(doc, 
+                                interlacewise_check, 
+                                'InterlaceMetric', 
+                                d['InterlaceWiseCheck']['InterlaceMetric(MI)'])
+            if gradient_number == 0:
+                corr = d['InterlaceWiseCheck']['InterlaceCorrelation_Baseline']
+            else:
+                corr = d['InterlaceWiseCheck']['InterlaceCorrelation']
+            append_text_element(doc, 
+                                interlacewise_check, 
+                                'InterlaceCorrelationBaseline', 
+                                corr)
+            gradient.appendChild(interlacewise_check)
+            gradientwise_check = doc.createElement('GradientwiseCheck')
+            append_text_element(doc, 
+                                gradientwise_check, 
+                                'GradientAngleX', 
+                                d['GradientWiseCheck']['GradientAngleX'])
+            append_text_element(doc, 
+                                gradientwise_check, 
+                                'GradientAngleY', 
+                                d['GradientWiseCheck']['GradientAngleY'])
+            append_text_element(doc, 
+                                gradientwise_check, 
+                                'GradientAngleZ', 
+                                d['GradientWiseCheck']['GradientAngleZ'])
+            append_text_element(doc, 
+                                gradientwise_check, 
+                                'GradientTranslationX', 
+                                d['GradientWiseCheck']['GradientTranslationX'])
+            append_text_element(doc, 
+                                gradientwise_check, 
+                                'GradientTranslationY', 
+                                d['GradientWiseCheck']['GradientTranslationY'])
+            append_text_element(doc, 
+                                gradientwise_check, 
+                                'GradientTranslationZ', 
+                                d['GradientWiseCheck']['GradientTranslationZ'])
+            append_text_element(doc, 
+                                gradientwise_check, 
+                                'GradientMetric', 
+                                d['GradientWiseCheck']['GradientMetric(MI)'])
+            gradient.appendChild(gradientwise_check)
+            append_text_element(doc, gradient, 'QCIndex', d['QC_Index'])
+            gradients.appendChild(gradient)
+
+        root.appendChild(gradients)
+
+        assessment_xml = '%s/%s.xml' % (co.path, scan.label())
+        print 'creating xml %s...' % assessment_xml
+        fo = open(assessment_xml, 'w')
+        fo.write(doc.toxml())
+        fo.close()
+
+        print 'creating assessment %s...' % assessment_name
+        assessment.create(xml=assessment_xml)
+
+        resource = assessment.out_resource('OUTPUT')
+        resource.create()
+        fnames = ('default.xml', 
+                  '%s_QCReport.txt' % scan.label(), 
+                  '%s_XMLQCResult.xml' % scan.label())
+        for fname in fnames:
+            print 'uploading %s...' % fname
+            file = resource.file(fname).put(open(fname).read())
+
+        os.chdir('/tmp')
 
 sys.exit(0)
 
