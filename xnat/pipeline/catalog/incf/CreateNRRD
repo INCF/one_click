@@ -1,0 +1,177 @@
+#!/bin/bash
+
+export LD_LIBRARY_PATH=/home/ch/Slicer-4.1.0-2012-09-12-linux-amd64/lib/Slicer-4.1/cli-modules:/home/ch/Slicer-4.1.0-2012-09-12-linux-amd64/lib/Slicer-4.1
+
+progname=`basename $0`
+version=1.0
+
+if [ $# -eq 0 ]
+then
+    echo
+    echo "usage: $progname <args>"
+    echo
+    echo "arguments (all required) are:"
+    echo
+    echo "    -host <XNAT base URL>"
+    echo "    -u <XNAT user name>"
+    echo "    -pwd <XNAT password>"
+    echo "    -project <project>"
+    echo "    -xnatId <experiment ID>"
+    echo "    -session <experiment label>"
+    echo
+    exit 1
+fi
+
+if [ x"$1" = x"--version" ]
+then
+    echo $progname $version
+    exit 0
+fi
+
+while [ $# -gt 0 ]
+do
+    if [ x"$1" = x"-host" ]
+    then
+        shift
+        if [ $# -eq 0 ]
+        then
+            echo "$progname: -host requires an argument" >&2
+            exit 1
+        fi
+        host="$1"
+    elif [ x"$1" = x"-u" ]
+    then
+        shift
+        if [ $# -eq 0 ]
+        then
+            echo "$progname: -u requires an argument" >&2
+            exit 1
+        fi
+        user="$1"
+    elif [ x"$1" = x"-pwd" ]
+    then
+        shift
+        if [ $# -eq 0 ]
+        then
+            echo "$progname: -pwd requires an argument" >&2
+            exit 1
+        fi
+        password="$1"
+    elif [ x"$1" = x"-project" ]
+    then
+        shift
+        if [ $# -eq 0 ]
+        then
+            echo "$progname: -project requires an argument" >&2
+            exit 1
+        fi
+        project="$1"
+    elif [ x"$1" = x"-xnatId" ]
+    then
+        shift
+        if [ $# -eq 0 ]
+        then
+            echo "$progname: -xnatId requires an argument" >&2
+            exit 1
+        fi
+        experiment_id="$1"
+    elif [ x"$1" = x"-session" ]
+    then
+        shift
+        if [ $# -eq 0 ]
+        then
+            echo "$progname: -session requires an argument" >&2
+            exit 1
+        fi
+        experiment_label="$1"
+    elif echo x"$1" | egrep '^x-' > /dev/null
+    then
+        echo "$progname: unknown flag \"$1\"" >&2
+        exit 1
+    else
+        echo "$progname: extra arguments" >&2
+        exit 1
+    fi
+    shift
+done
+
+if [ -z "$host" ]
+then
+    echo "$progname: no host given" >&2
+    exit 1
+fi
+
+if [ -z "$user" ]
+then
+    echo "$progname: no user given" >&2
+    exit 1
+fi
+
+if [ -z "$password" ]
+then
+    echo "$progname: no password given" >&2
+    exit 1
+fi
+
+if [ -z "$project" ]
+then
+    echo "$progname: no project given" >&2
+    exit 1
+fi
+
+if [ -z "$experiment_id" ]
+then
+    echo "$progname: no experiment ID given" >&2
+    exit 1
+fi
+
+if [ -z "$experiment_label" ]
+then
+    echo "$progname: no experiment label given" >&2
+    exit 1
+fi
+
+if ! tempdir=`mktemp -d /tmp/${progname}.XXXXXX`
+then
+    echo "$progname: error creating temporary directory" >&2
+    exit 1
+fi
+
+host=`echo "$host" | sed 's+[/]*$++'`
+date > $tempdir/info
+echo $0 >> $tempdir/info
+echo $host >> $tempdir/info
+echo $user >> $tempdir/info
+echo $project >> $tempdir/info
+echo $experiment_id >> $tempdir/info
+echo $experiment_label >> $tempdir/info
+
+for scan_dir in /data/archive/$project/arc001/$experiment_label/SCANS/*
+do
+    scan_name=`basename $scan_dir`
+    if [ -d $scan_dir/NRRD ]
+    then
+        echo "$scan_name: NRRD directory exists"
+        continue
+    fi
+    if [ ! -d $scan_dir/DICOM ]
+    then
+        echo "$scan_name: no DICOM directory"
+        continue
+    fi
+    if /home/ch/Slicer-4.1.0-2012-09-12-linux-amd64/lib/Slicer-4.1/cli-modules/DicomToNrrdConverter --inputDicomDirectory $scan_dir/DICOM --outputDirectory $tempdir --outputVolume ${scan_name}.nrrd
+    then
+        resource_url=${host}/data/experiments/$experiment_id/scans/$scan_name/resources/NRRD
+        curl -X PUT -u ${user}:${password} $resource_url
+        curl -X PUT \
+             --data-binary @$tempdir/${scan_name}.nrrd \
+             -u ${user}:${password} \
+             "${resource_url}/files/${scan_name}.nrrd?inbody=true"
+    fi
+done
+
+rm -rf $tempdir
+
+exit 0
+
+# eof

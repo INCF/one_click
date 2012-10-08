@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pip:Resource xmlns:pip="http://nrg.wustl.edu/pipeline">
+	<pip:name>CreateNRRD</pip:name>
+	<pip:location>/home/ch/xnat-1.5.4/pipeline/catalog/incf</pip:location>
+	<pip:type>Executable</pip:type>
+	<pip:description>
+		Creates NRRD images from DICOMs.
+	</pip:description>
+	<pip:input>
+		<pip:argument id="project">
+			<pip:name>project</pip:name>
+			<pip:description>XNAT Project ID to which the Session belongs</pip:description>
+		</pip:argument>
+		<pip:argument id="xnatId">
+			<pip:name>xnatId</pip:name>
+			<pip:description>XNAT Session Id</pip:description>
+		</pip:argument>
+		<pip:argument id="session">
+			<pip:name>session</pip:name>
+			<pip:description>Session Label</pip:description>
+		</pip:argument>
+		<pip:argument id="host">
+			<pip:name>host</pip:name>
+			<pip:description>XNAT Host</pip:description>
+		</pip:argument>
+		<pip:argument id="user">
+			<pip:name>u</pip:name>
+			<pip:description>XNAT Username</pip:description>
+		</pip:argument>
+		<pip:argument id="pwd" isSensitive="true">
+			<pip:name>pwd</pip:name>
+			<pip:description>XNAT Password</pip:description>
+		</pip:argument>
+	</pip:input>
+</pip:Resource>
