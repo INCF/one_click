@@ -1,0 +1,224 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2//EN">
+$page.setTitle("DTIPrepQA Details")
+$page.setLinkColor($ui.alink)
+$page.setVlinkColor($ui.vlink)
+#if ($turbineUtils.GetPassedParameter("popup", $data))
+	#set ($popup = $turbineUtils.GetPassedParameter("popup", data) )
+	#set ($popup = "false")
+#end
+<TABLE width="100%">
+	<TR>
+		<TD>
+			<table width="100%">
+				<TR>
+					<TD align="left" valign="middle">
+						<font face="$ui.sansSerifFonts" size="3"><b>DTIPrepQA Details</b></font>
+					</TD>
+				</TR>
+			</TABLE>
+		</TD>
+	</TR>
+	<TR>
+		<TD>
+			<TABLE width="100%">
+				<TR>
+					<TD valign="top">
+						<TABLE>
+							<TR><TD>imageSession_ID</TD><TD>$!item.getStringProperty("incf:DTIPrepQAData/imageSession_ID")</TD></TR>
+							<TR><TD>ID</TD><TD>$!item.getStringProperty("incf:DTIPrepQAData/ID")</TD></TR>
+							<TR><TD>project</TD><TD>$!item.getStringProperty("incf:DTIPrepQAData/project")</TD></TR>
+							<TR><TD>label</TD><TD>$!item.getStringProperty("incf:DTIPrepQAData/label")</TD></TR>
+							<TR><TD>source scan</TD><TD>$!item.getStringProperty("incf:DTIPrepQAData/source_scan[0]/source_scan")</TD></TR>
+						</TABLE>
+					</TD>
+					<TD valign="top" align="right">
+						#elementActionsBox($element $search_field $search_value $data.getSession().getAttribute("user") $item)
+					</TD>
+				</TR>
+			</TABLE>
+		</TD>
+	</TR>
+	<TR>
+		<TD>
+			<TABLE>
+
+				<TR><TH align="left"><font face="$ui.sansSerifFonts" size="2">Summary</font></TH></TR>
+
+				<TR>
+					<TD align="left" valign="top">
+						<TABLE>
+							<TR><TD>ImageOriginCheck</TD><TD>$!item.getStringProperty("incf:DTIPrepQAData/Summary/ImageOriginCheck")</TD></TR>
+							<TR><TD>ImageSpaceCheck</TD><TD>$!item.getStringProperty("incf:DTIPrepQAData/Summary/ImageSpaceCheck")</TD></TR>
+							<TR><TD>ImageSpacedDirectionCheck</TD><TD>$!item.getStringProperty("incf:DTIPrepQAData/Summary/ImageSpacedDirectionCheck")</TD></TR>
+							<TR><TD>ImageSpacingCheck</TD><TD>$!item.getStringProperty("incf:DTIPrepQAData/Summary/ImageSpacingCheck")</TD></TR>
+							<TR><TD>ImageSizeCheck</TD><TD>$!item.getStringProperty("incf:DTIPrepQAData/Summary/ImageSizeCheck")</TD></TR>
+							<TR><TD>ImageGradientCheck</TD><TD>$!item.getStringProperty("incf:DTIPrepQAData/Summary/ImageGradientCheck")</TD></TR>
+							<TR><TD>DiffusionMeasurementFrameCheck</TD><TD>$!item.getStringProperty("incf:DTIPrepQAData/Summary/DiffusionMeasurementFrameCheck")</TD></TR>
+							<TR><TD>DiffusionSlicewiseCheck</TD><TD>$!item.getStringProperty("incf:DTIPrepQAData/Summary/DiffusionSlicewiseCheck")</TD></TR>
+							<TR><TD>DWIInterlacewiseCheck</TD><TD>$!item.getStringProperty("incf:DTIPrepQAData/Summary/DWIInterlacewiseCheck")</TD></TR>
+							<TR><TD>DWIGradientwiseCheck</TD><TD>$!item.getStringProperty("incf:DTIPrepQAData/Summary/DWIGradientwiseCheck")</TD></TR>
+						</TABLE>
+					</TD>
+				</TR>
+
+#set($incf_NotesData_Note_18_NUM_ROWS=$item.getChildItems("incf:DTIPrepQAData/Summary/Notes/Note").size() - 1)
+#if($incf_NotesData_Note_18_NUM_ROWS>=0)
+				<TR>
+					<TD align="left" valign="top">
+						<TABLE>
+#foreach($incf_NotesData_Note_18_COUNTER in [0..$incf_NotesData_Note_18_NUM_ROWS])
+							<TR><TD>Note</TD><TD>$!item.getStringProperty("incf:DTIPrepQAData/Summary/Notes/Note[$incf_NotesData_Note_18_COUNTER]/Note")</TD></TR>
+#end
+						</TABLE>
+					</TD>
+				</TR>
+#end
+
+				<TR><TH align="left"><font face="$ui.sansSerifFonts" size="2">Basic Information</font></TH></TR>
+
+				<TR>
+					<TD align="left" valign="top">
+<!-- BEGIN incf:DTIPrepQAData/Info -->
+						<TABLE>
+							<TR><TD>CheckTimes</TD><TD>$!item.getIntegerProperty("incf:DTIPrepQAData/Info/SlicewiseParameters/CheckTimes")</TD></TR>
+							<TR><TD>BaselineStdevTimes</TD><TD>$!item.getIntegerProperty("incf:DTIPrepQAData/Info/SlicewiseParameters/BaselineStdevTimes")</TD></TR>
+							<TR><TD>HeadSkipRatio</TD><TD>$!item.getDoubleProperty("incf:DTIPrepQAData/Info/SlicewiseParameters/HeadSkipRatio")</TD></TR>
+							<TR><TD>GradientStdevTimes</TD><TD>$!item.getDoubleProperty("incf:DTIPrepQAData/Info/SlicewiseParameters/GradientStdevTimes")</TD></TR>
+							<TR><TD>TailSkipRatio</TD><TD>$!item.getDoubleProperty("incf:DTIPrepQAData/Info/SlicewiseParameters/TailSkipRatio")</TD></TR>
+						</TABLE>
+					</TD>
+				</TR>
+
+				<TR><TH align="left"><font face="$ui.sansSerifFonts" size="2">Gradient Directions</font></TH></TR>
+				<TR>
+					<TD align="left" valign="top">
+						<TABLE>
+							<TR>
+								<TH>Number</TH>
+								<TH>Direction</TH>
+							</TR>
+#set($incf_GradientDirectionData_22_NUM_ROWS=$item.getChildItems("incf:DTIPrepQAData/Info/GradientDirections/GradientDirection").size() - 1)
+#foreach($incf_GradientDirectionData_22_COUNTER in [0..$incf_GradientDirectionData_22_NUM_ROWS])
+							<TR>
+								<TD>$!item.getIntegerProperty("incf:DTIPrepQAData/Info/GradientDirections/GradientDirection[$incf_GradientDirectionData_22_COUNTER]/number")</TD>
+								<TD>$!item.getStringProperty("incf:DTIPrepQAData/Info/GradientDirections/GradientDirection[$incf_GradientDirectionData_22_COUNTER]/GradientDirectionData")</TD>
+							</TR>
+#end
+						</TABLE>
+<!-- END incf:DTIPrepQAData/Info/GradientDirections -->
+					</TD>
+				</TR>
+
+#set($incf_SlicewiseArtifactData_24_NUM_ROWS=$item.getChildItems("incf:DTIPrepQAData/SlicewiseArtifacts/SlicewiseArtifact").size() - 1)
+#if($incf_SlicewiseArtifactData_24_NUM_ROWS==0)
+				<TR><TH align="left"><font face="$ui.sansSerifFonts" size="2">No Slicewise Artifacts</font></TH></TR>
+#else
+				<TR><TH align="left"><font face="$ui.sansSerifFonts" size="2">Slicewise Artifacts</font></TH></TR>
+				<TR>
+					<TD>
+						<TABLE>
+							<TR>
+								<TH>Gradient</TH>
+								<TH>Region</TH>
+								<TH>Slice</TH>
+								<TH>Correlation</TH>
+							</TR>
+#foreach($incf_SlicewiseArtifactData_24_COUNTER in [0..$incf_SlicewiseArtifactData_24_NUM_ROWS])
+							<TR>
+								<TD>$!item.getIntegerProperty("incf:DTIPrepQAData/SlicewiseArtifacts/SlicewiseArtifact[$incf_SlicewiseArtifactData_24_COUNTER]/Gradient")</TD>
+								<TD>$!item.getStringProperty("incf:DTIPrepQAData/SlicewiseArtifacts/SlicewiseArtifact[$incf_SlicewiseArtifactData_24_COUNTER]/Region")</TD>
+								<TD>$!item.getIntegerProperty("incf:DTIPrepQAData/SlicewiseArtifacts/SlicewiseArtifact[$incf_SlicewiseArtifactData_24_COUNTER]/Slice")</TD>
+								<TD>$!item.getStringProperty("incf:DTIPrepQAData/SlicewiseArtifacts/SlicewiseArtifact[$incf_SlicewiseArtifactData_24_COUNTER]/Correlation")</TD>
+							</TR>
+#end
+						<TABLE>
+					</TD>
+				<TR>
+#end
+
+#set($incf_GradientData_26_NUM_ROWS=$item.getChildItems("incf:DTIPrepQAData/Gradients/Gradient").size() - 1)
+#if($incf_GradientData_26_NUM_ROWS==0)
+				<TR><TH align="left"><font face="$ui.sansSerifFonts" size="2">No Gradients</font></TH></TR>
+#else
+#foreach($incf_GradientData_26_COUNTER in [0..$incf_GradientData_26_NUM_ROWS])
+				<TR><TH align="left"><font face="$ui.sansSerifFonts" size="2">Gradient $!item.getIntegerProperty("incf:DTIPrepQAData/Gradients/Gradient[$incf_GradientData_26_COUNTER]/number")</font></TH></TR>
+				<TR>
+					<TD>
+						<TABLE>
+							<TR>
+								<TD>Processing</TD><TD>$!item.getStringProperty("incf:DTIPrepQAData/Gradients/Gradient[$incf_GradientData_26_COUNTER]/Processing")</TD>
+							</TR>
+							<TR>
+								<TD>OriginalDir</TD><TD>$!item.getStringProperty("incf:DTIPrepQAData/Gradients/Gradient[$incf_GradientData_26_COUNTER]/OriginalDir")</TD>
+							</TR>
+							<TR>
+								<TD>ReplacedDir</TD><TD>$!item.getStringProperty("incf:DTIPrepQAData/Gradients/Gradient[$incf_GradientData_26_COUNTER]/ReplacedDir")</TD>
+							</TR>
+							<TR>
+								<TD>CorrectedDir</TD><TD>$!item.getStringProperty("incf:DTIPrepQAData/Gradients/Gradient[$incf_GradientData_26_COUNTER]/CorrectedDir")</TD>
+							</TR>
+							<TR>
+								<TD>QCIndex</TD><TD>$!item.getIntegerProperty("incf:DTIPrepQAData/Gradients/Gradient[$incf_GradientData_26_COUNTER]/QCIndex")</TD>
+							</TR>
+						</TABLE>
+					</TD>
+				</TR>
+#set($incf_SliceExcludeData_28_NUM_ROWS=$item.getChildItems("incf:DTIPrepQAData/Gradients/Gradient[$incf_GradientData_26_COUNTER]/SliceExcludes/SliceExclude").size() - 1)
+#if($incf_SliceExcludeData_28_NUM_ROWS==0)
+				<TR><TH align="left"><font face="$ui.sansSerifFonts" size="1">No Slice Excludes</font></TH></TR>
+#else
+				<TR><TH align="left"><font face="$ui.sansSerifFonts" size="1">Slice Excludes</font></TH></TR>
+				<TR>
+					<TD>
+						<TABLE>
+							<TR>
+								<TH>Slice</TH>
+								<TH>Correlation</TH>
+							</TR>
+#foreach($incf_SliceExcludeData_28_COUNTER in [0..$incf_SliceExcludeData_28_NUM_ROWS])
+							<TR>
+								<TD>$!item.getIntegerProperty("incf:DTIPrepQAData/Gradients/Gradient[$incf_GradientData_26_COUNTER]/SliceExcludes/SliceExclude[$incf_SliceExcludeData_28_COUNTER]/Slice")</TD>
+								<TD>$!item.getStringProperty("incf:DTIPrepQAData/Gradients/Gradient[$incf_GradientData_26_COUNTER]/SliceExcludes/SliceExclude[$incf_SliceExcludeData_28_COUNTER]/Correlation")</TD>
+							</TR>
+#end
+						</TABLE>
+					</TD>
+#end
+
+				<TR><TH align="left"><font face="$ui.sansSerifFonts" size="1">Interlacewise Check</font></TH></TR>
+				<TR>
+					<TD>
+						<TABLE>
+							<TR><TD>InterlaceAngleX</TD><TD>$!item.getStringProperty("incf:DTIPrepQAData/Gradients/Gradient[$incf_GradientData_26_COUNTER]/InterlacewiseCheck/InterlaceAngleX")</TD></TR>
+							<TR><TD>InterlaceAngleY</TD><TD>$!item.getStringProperty("incf:DTIPrepQAData/Gradients/Gradient[$incf_GradientData_26_COUNTER]/InterlacewiseCheck/InterlaceAngleY")</TD></TR>
+							<TR><TD>InterlaceAngleZ</TD><TD>$!item.getStringProperty("incf:DTIPrepQAData/Gradients/Gradient[$incf_GradientData_26_COUNTER]/InterlacewiseCheck/InterlaceAngleZ")</TD></TR>
+							<TR><TD>InterlaceTranslationX</TD><TD>$!item.getStringProperty("incf:DTIPrepQAData/Gradients/Gradient[$incf_GradientData_26_COUNTER]/InterlacewiseCheck/InterlaceTranslationX")</TD></TR>
+							<TR><TD>InterlaceTranslationY</TD><TD>$!item.getStringProperty("incf:DTIPrepQAData/Gradients/Gradient[$incf_GradientData_26_COUNTER]/InterlacewiseCheck/InterlaceTranslationY")</TD></TR>
+							<TR><TD>InterlaceTranslationZ</TD><TD>$!item.getStringProperty("incf:DTIPrepQAData/Gradients/Gradient[$incf_GradientData_26_COUNTER]/InterlacewiseCheck/InterlaceTranslationZ")</TD></TR>
+							<TR><TD>InterlaceMetric</TD><TD>$!item.getStringProperty("incf:DTIPrepQAData/Gradients/Gradient[$incf_GradientData_26_COUNTER]/InterlacewiseCheck/InterlaceMetric")</TD></TR>
+							<TR><TD>InterlaceCorrelationBaseline</TD><TD>$!item.getStringProperty("incf:DTIPrepQAData/Gradients/Gradient[$incf_GradientData_26_COUNTER]/InterlacewiseCheck/InterlaceCorrelationBaseline")</TD></TR>
+						</TABLE>
+					</TD>
+				</TR>
+
+				<TR><TH align="left"><font face="$ui.sansSerifFonts" size="1">Gradientwise Check</font></TH></TR>
+				<TR>
+					<TD>
+						<TABLE>
+							<TR><TD>GradientAngleX</TD><TD>$!item.getStringProperty("incf:DTIPrepQAData/Gradients/Gradient[$incf_GradientData_26_COUNTER]/GradientwiseCheck/GradientAngleX")</TD></TR>
+							<TR><TD>GradientAngleY</TD><TD>$!item.getStringProperty("incf:DTIPrepQAData/Gradients/Gradient[$incf_GradientData_26_COUNTER]/GradientwiseCheck/GradientAngleY")</TD></TR>
+							<TR><TD>GradientAngleZ</TD><TD>$!item.getStringProperty("incf:DTIPrepQAData/Gradients/Gradient[$incf_GradientData_26_COUNTER]/GradientwiseCheck/GradientAngleZ")</TD></TR>
+							<TR><TD>GradientTranslationX</TD><TD>$!item.getStringProperty("incf:DTIPrepQAData/Gradients/Gradient[$incf_GradientData_26_COUNTER]/GradientwiseCheck/GradientTranslationX")</TD></TR>
+							<TR><TD>GradientTranslationY</TD><TD>$!item.getStringProperty("incf:DTIPrepQAData/Gradients/Gradient[$incf_GradientData_26_COUNTER]/GradientwiseCheck/GradientTranslationY")</TD></TR>
+							<TR><TD>GradientTranslationZ</TD><TD>$!item.getStringProperty("incf:DTIPrepQAData/Gradients/Gradient[$incf_GradientData_26_COUNTER]/GradientwiseCheck/GradientTranslationZ")</TD></TR>
+							<TR><TD>GradientMetric</TD><TD>$!item.getStringProperty("incf:DTIPrepQAData/Gradients/Gradient[$incf_GradientData_26_COUNTER]/GradientwiseCheck/GradientMetric")</TD></TR>
+						</TABLE>
+					</TD>
+				</TR>
+#end
+#end
+
+			</TABLE>
+		</TD>
+	</TR>
+</TABLE><BR>#parse("/screens/ReportProjectSpecificFields.vm")
