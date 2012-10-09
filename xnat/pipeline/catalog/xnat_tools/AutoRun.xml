@@ -128,7 +128,7 @@
 				</argument>
 			</resource>
 		</step> 
-		<step id="5" description="Run QA"  continueOnFailure="true">
+		<step id="4" description="Run QA"  continueOnFailure="true">
 			<resource name="RunQA" location="incf">
 				<argument id="session">
 					<value>^/Pipeline/parameters/parameter[name='sessionLabel']/values/unique/text()^</value>
