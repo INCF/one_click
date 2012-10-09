@@ -9,9 +9,12 @@ import sys
 import os
 import string
 import subprocess
+import csv
+import StringIO
 # TODO remove this (time)
 import time
 from PyQt4 import QtCore, QtGui, uic
+import httplib2
 import dicom
 
 #############################################################################
@@ -27,17 +30,221 @@ except:
 else:
     have_storescu = True
 
+#TODO remove
 # projects[identifier] -> have permission to upload
 projects = {'christian': True, 
             'rembrandt': False}
 
+conf_url = 'http://xnat.incf.org/conf.txt'
+
+#TODO remove
 # subjects[project] -> list of subjects
 subjects = {'christian': ['subj1', 'subj2']}
 
+#TODO remove
 # sessions[project] -> list of sessions
 sessions = {'christian': ['subj1_sess1', 'subj1_sess2']}
 
 completion_msg = """Your upload is complete.  QC will be run on your data and you will be notified by e-mail when the QC reports are ready."""
+
+server_config_msg = 'There was an error reading server configuration.  Please contact xnat-admin@incf.org for assistance.'
+
+no_dcmtk_msg = """storescu (the program used to send data to the server) was not found on your system.  Please install DCMTK (or adjust your path) before proceeding."""
+
+bad_protocol_msg = """The INCF server does not support the protocol used in this program.  Please update this program (updates are available at xnat.incf.org)."""
+
+#############################################################################
+# classes
+#
+
+class InvalidDicomError(Exception):
+    """Exception raised when read_dicom_file() tries to read a file that 
+    doesn't have DICM at byte 128.
+    """
+
+class XNAT:
+
+    def __init__(self, base_url, user_name, password):
+        self.base_url = base_url
+        h = httplib2.Http()
+        h.add_credentials(user_name, password)
+        url = '%s/data/JSESSION' % self.base_url
+        (response, content) = h.request(url)
+        if response['status'] != '200':
+            raise ValueError
+        if 'set-cookie' not in response:
+            raise ValueError
+        self.jsession_cookie = response['set-cookie'].split(';')[0]
+        self.user_name = user_name
+        self._projects = None
+        self._user_projects = None
+        self._subjects = {}
+        self._sessions = {}
+        return
+
+    def _request(self, url, method='GET', expected_status='200'):
+        full_url = '%s/data%s' % (self.base_url, url)
+        h = httplib2.Http()
+        headers = {'Cookie': self.jsession_cookie}
+        (response, content) = h.request(full_url, method, headers=headers)
+        if response['status'] != expected_status:
+            raise RequestError(method, full_url, response['status'])
+        return (response, content)
+
+    def _request_table(self, url):
+        (response, content) = self._request('%s?format=csv' % url)
+        reader = csv.reader(StringIO.StringIO(content))
+        header = reader.next()
+        return [ dict(zip(header, row)) for row in reader ]
+
+    def close(self):
+        self._request('/JSESSION', 'DELETE')
+        return
+
+    def projects(self):
+        if self._projects is None:
+            self._projects = []
+            for project in self._request_table('/projects'):
+                self._projects.append(project['ID'])
+        return self._projects
+
+    def user_projects(self):
+        if self._user_projects is None:
+            self._user_projects = []
+            for project in self.projects():
+                user_url = '/projects/%s/users' % project
+                for user in self._request_table(user_url):
+                    if user['login'] == self.user_name:
+                        self._user_projects.append(project)
+                        break
+        return self._user_projects
+
+    def create_project(self, project):
+        if project in self.projects():
+            raise ValueError('project %s exists' % project)
+        self._request('/projects/%s' % project, 'PUT', '200')
+        # reset the cache
+        self._projects = None
+        self._user_projects = None
+        return
+
+    def subjects(self, project):
+        if project not in self.projects():
+            raise ValueError('project %s not found' % project)
+        if project not in self._subjects:
+            self._subjects[project] = []
+            url = '/projects/%s/subjects' % project
+            for subject in self._request_table(url):
+                self._subjects[project].append(subject['label'])
+            self._subjects[project].sort()
+        return self._subjects[project]
+
+    def create_subject(self, project, subject):
+        if project not in self.projects():
+            raise ValueError('project %s not found' % project)
+        if subject in self.subjects(project):
+            raise ValueError('subject %s exists in project %s' % (subject, 
+                                                                  project))
+        self._request('/projects/%s/subjects/%s' % (project, subject), 
+                      'PUT', 
+                      '201')
+        # reset the cache -- this will exist due to our self.subjects(project) 
+        # call above
+        del self._subjects[project]
+        return
+
+    def sessions(self, project):
+        if project not in self._sessions:
+            self._sessions[project] = {}
+        sessions = []
+        for subject in self.subjects(project):
+            if subject not in self._sessions[project]:
+                self._sessions[project][subject] = []
+                url = '/projects/%s/subjects/%s/experiments' % (project, 
+                                                                subject)
+                for session in self._request_table(url):
+                    self._sessions[project][subject].append(session['label'])
+            sessions.extend(self._sessions[project][subject])
+        sessions.sort()
+        return sessions
+
+    def create_session(self, project, subject, session):
+        if project not in self.projects():
+            raise ValueError('project %s not found' % project)
+        if subject not in self.subjects(project):
+            raise ValueError('no subject %s in project %s' % (subject, project))
+        if session in self.sessions(project):
+            raise ValueError('session %s exists in project %s' % (session, 
+                                                                  project))
+        fmt = '/projects/%s/subjects/%s/experiments/%s?xsiType=mrSessionData'
+        url = fmt % (project, subject, session)
+        self._request(url, 'PUT', '201')
+        # reset the cache -- this will exist due to the calls above
+        del self._sessions[project][subject]
+        return
+
+#############################################################################
+# functions
+#
+
+def parse_server_configuration(data):
+    conf = {}
+    # header -- conf version 1 is text key/value (the only thing we handle here)
+    if data.split('\n')[0] != 'conf 1':
+        return None
+    for line in data.split('\n')[1:]:
+        if not line:
+            continue
+        (key, value) = line.split(' ', 1)
+        if key == 'client_protocol':
+            conf.setdefault(key, []).append(value)
+        elif key in ('xnat_base', 'push_target'):
+            conf[key] = value
+        else:
+            conf.setdefault(key, []).append(value)
+    for key in ('client_protocol', 'xnat_base', 'push_target'):
+        if key not in conf:
+            return None
+    (push_host, push_port) = conf['push_target'].split(':')
+    conf['push_host'] = push_host
+    conf['push_port'] = push_port
+    return conf
+
+def read_dicom_file(fname):
+    """Read a DICOM file, raising an exception if the 'DICM' marker is not 
+    present at byte 128.
+
+    dicom.read_file() does this as of pydicom 0.9.5.
+    """
+    fo = open(fname)
+    try:
+        preamble = fo.read(128)
+        magic = fo.read(4)
+        if len(preamble) != 128 or magic != 'DICM':
+            raise InvalidDicomError
+        fo.seek(0)
+        do = dicom.read_file(fo)
+    finally:
+        fo.close()
+    return do
+
+def patient_studies(dicom_files, studies, patient_id):
+    """given our dicom_files and studies records and a patient ID, return a 
+    list of (datetime, study instance UID) ordered by date+time"""
+    ps = []
+    for uid in dicom_files[patient_id]:
+        datetime = '%s%s' % studies[uid]
+        ps.append([datetime, uid])
+    ps.sort(lambda a, b: cmp(a[0], b[0]))
+    for el in ps:
+        date_time_parts = (el[0][0:4], 
+                           el[0][4:6], 
+                           el[0][6:8], 
+                           el[0][8:10], 
+                           el[0][10:12], 
+                           el[0][12:14])
+        el[0] = '%s-%s-%s %s:%s:%s' % date_time_parts
+    return ps
 
 #############################################################################
 # GUI elements
@@ -46,16 +253,45 @@ completion_msg = """Your upload is complete.  QC will be run on your data and yo
 class Application(QtGui.QApplication):
 
     def __init__(self, argv, have_storescu):
+        # XNAT connection object (set by self.login_dialog)
+        self.xnat = None
+        # self.dicom_files[PatientID][StudyInstanceUID] -> list of file names
+        # set by self.file_loader
+        self.dicom_files = None
+        # self.studies[StudyInstanceUID] -> (study date, study time)
+        # set by self.file_loader
+        self.studies = None
         QtGui.QApplication.__init__(self, argv)
         self.quit_dialog = QuitDialog(self)
+        # set this to true for a clean exit if there are any startup errors
         self.pre_quit = False
         if not have_storescu:
-            self.no_dcmtk_dialog = NoDCMTKDialog(self)
-            self.no_dcmtk_dialog.show()
-        else:
-            if not self.scan_files():
-                self.pre_quit = True
+            self.show_exit_notice(no_dcmtk_msg)
+            self.pre_quit = True
+        elif not self.read_config():
+            self.pre_quit = True
+        elif '2' not in self.server_conf['client_protocol']:
+            self.show_exit_notice(bad_protocol_msg)
+            self.pre_quit = True
+        elif not self.scan_files():
+            self.pre_quit = True
         return
+
+    def read_config(self):
+        try:
+            h = httplib2.Http()
+            (response, content) = h.request(conf_url)
+            if response['status'] != '200':
+                self.show_exit_notice(server_config_msg)
+                return False
+            self.server_conf = parse_server_configuration(content)
+            if not self.server_conf:
+                self.show_exit_notice(server_config_msg)
+                return False
+        except:
+            self.show_exit_notice(server_config_msg)
+            return False
+        return True
 
     def scan_files(self):
         paths = self.argv()[1:]
@@ -64,14 +300,20 @@ class Application(QtGui.QApplication):
         self.file_loader.scan()
         self.file_loader.read()
         self.file_loader.hide()
+# DEVEL
+        self.xnat = XNAT(self.server_conf['xnat_base'], 
+                         'christian', 
+                         open('pw').read().strip())
         if self.file_loader.quit_called:
             return False
-        elif not self.file_loader.dicom_files:
+        elif not self.dicom_files:
             self.show_exit_notice('No dicom files found.')
             return False
         else:
-            self.agreement_dialog = AgreementDialog(self)
-            self.agreement_dialog.show()
+# DEVEL
+#            self.agreement_dialog = AgreementDialog(self)
+#            self.agreement_dialog.show()
+            self.get_upload_info()
         return True
 
     def login(self):
@@ -81,7 +323,8 @@ class Application(QtGui.QApplication):
         return
 
     def get_upload_info(self):
-        self.login_dialog.hide()
+# DEVEL
+#        self.login_dialog.hide()
         self.info_dialog = InfoDialog(self)
         self.info_dialog.show()
         return
@@ -96,8 +339,7 @@ class Application(QtGui.QApplication):
         return
 
     def finish(self):
-        self.upload_dialog.hide()
-        self.show_exit_notice(completion_msg)
+        self.quit()
 
     def show_exit_notice(self, msg):
         self.exit_notice_dialog = ExitNoticeDialog(self, msg)
@@ -109,9 +351,9 @@ class UploadDialog(QtGui.QDialog):
     def __init__(self, app):
         QtGui.QDialog.__init__(self)
         uic.loadUi('ui/upload_dialog.ui', self)
-        self.complete_button.setEnabled(False)
         self.progress.setRange(0, 2000)
         self.progress.setValue(0)
+        self.state = 'uploading'
         self.app = app
         return
 
@@ -131,18 +373,18 @@ class UploadDialog(QtGui.QDialog):
             self.app.processEvents()
             if self.quit_called:
                 return
-        self.stop_button.setEnabled(False)
-        self.complete_button.setEnabled(True)
+        self.stop_button.setText('Quit')
+        self.info_label.setText(completion_msg)
+        self.state = 'done'
         return
 
     def quit(self):
-        self.app.quit_dialog.show()
-        if self.app.quit_dialog.exec_():
-            self.quit_called = True
-        return
-
-    def complete(self):
-        self.app.finish()
+        if self.state == 'uploading':
+            self.app.quit_dialog.show()
+            if self.app.quit_dialog.exec_():
+                self.quit_called = True
+        else:
+            self.app.finish()
         return
 
 class InfoDialog(QtGui.QDialog):
@@ -150,17 +392,167 @@ class InfoDialog(QtGui.QDialog):
     def __init__(self, app):
         QtGui.QDialog.__init__(self)
         uic.loadUi('ui/info_dialog.ui', self)
-        for edit in (self.subject_1_project_edit, 
-                     self.subject_1_subject_edit, 
-                     self.session_1_edit, 
-                     self.subject_2_project_edit, 
-                     self.subject_2_subject_edit, 
-                     self.session_2_edit):
+        self.app = app
+        self.project_widgets = {}
+        self.subject_widgets = {}
+        self.session_widgets = {}
+        for patient_id in sorted(self.app.dicom_files):
+            widget = QtGui.QWidget()
+            layout = QtGui.QVBoxLayout()
+            widget.setLayout(layout)
+            layout.addWidget(QtGui.QLabel('Patient ID %s' % patient_id))
+            ps = patient_studies(self.app.dicom_files, 
+                                 self.app.studies, 
+                                 patient_id)
+            project_widget = QtGui.QWidget()
+            project_layout = QtGui.QHBoxLayout()
+            project_widget.setLayout(project_layout)
+            project_layout.addWidget(QtGui.QLabel('Project'))
+            edit = QtGui.QLineEdit()
             self.connect(edit, 
                          QtCore.SIGNAL('textEdited(QString)'), 
                          self.validate)
+            project_layout.addWidget(edit)
+            status = QtGui.QLabel()
+            project_layout.addWidget(status)
+            layout.addWidget(project_widget)
+            self.project_widgets[patient_id] = {'edit': edit, 'status': status}
+            subject_widget = QtGui.QWidget()
+            subject_layout = QtGui.QHBoxLayout()
+            subject_widget.setLayout(subject_layout)
+            subject_layout.addWidget(QtGui.QLabel('Subject'))
+            edit = QtGui.QLineEdit()
+            self.connect(edit, 
+                         QtCore.SIGNAL('textEdited(QString)'), 
+                         self.validate)
+            subject_layout.addWidget(edit)
+            status = QtGui.QLabel()
+            subject_layout.addWidget(status)
+            layout.addWidget(subject_widget)
+            self.subject_widgets[patient_id] = {'edit': edit, 'status': status}
+            session_number = 0
+            for (date_time, study_instance_uid) in ps:
+                session_number += 1
+                text = 'Session %d: %s' % (session_number, date_time)
+                layout.addWidget(QtGui.QLabel(text))
+                session_widget = QtGui.QWidget()
+                session_layout = QtGui.QHBoxLayout()
+                session_widget.setLayout(session_layout)
+                session_layout.addWidget(QtGui.QLabel('Session'))
+                edit = QtGui.QLineEdit()
+                self.connect(edit, 
+                             QtCore.SIGNAL('textEdited(QString)'), 
+                             self.validate)
+                session_layout.addWidget(edit)
+                status = QtGui.QLabel('status')
+                session_layout.addWidget(status)
+                sw = self.session_widgets.setdefault(patient_id, {})
+                sw[study_instance_uid] = {'edit': edit, 'status': status}
+                layout.addWidget(session_widget)
+            tab = QtGui.QScrollArea()
+            tab.setWidget(widget)
+            self.tab_widget.addTab(tab, str(patient_id))
+        # force loading of the XNAT information now (so we don't have delays 
+        # later)
+        self.projects = self.app.xnat.projects()
+        self.user_projects = self.app.xnat.user_projects()
+        self.subjects = {}
+        self.sessions = {}
+        for project in self.user_projects:
+            self.subjects[project] = self.app.xnat.subjects(project)
+            self.sessions[project] = self.app.xnat.sessions(project)
         self.validate()
-        self.app = app
+        return
+
+    def _validate_project(self, patient_id):
+        valid = True
+        widgets = self.project_widgets[patient_id]
+        project = str(widgets['edit'].text())
+        if not project:
+            widgets['status'].setText('no project')
+            valid = False
+        elif not self._validate_identifier(project):
+            widgets['status'].setText('bad project')
+            valid = False
+        elif project in self.user_projects:
+            widgets['status'].setText('exists')
+        elif project in self.projects:
+            widgets['status'].setText('perm err')
+            valid = False
+        else:
+            widgets['status'].setText('new')
+        if not valid:
+            self.subject_widgets[patient_id]['edit'].setEnabled(False)
+            self.subject_widgets[patient_id]['status'].setText('')
+        else:
+            self.subject_widgets[patient_id]['edit'].setEnabled(True)
+            if not self._validate_subject(patient_id, project):
+                valid = False
+        if not valid:
+            for widgets in self.session_widgets[patient_id].itervalues():
+                widgets['edit'].setEnabled(False)
+                widgets['status'].setText('')
+        else:
+            for widgets in self.session_widgets[patient_id].itervalues():
+                widgets['edit'].setEnabled(True)
+            if not self._validate_sessions(patient_id, project):
+                valid = False
+        return valid
+
+    def _validate_subject(self, patient_id, project):
+        valid = True
+        subject_widgets = self.subject_widgets[patient_id]
+        subject = str(subject_widgets['edit'].text())
+        if not subject:
+            subject_widgets['status'].setText('no subject')
+            valid = False
+        elif not self._validate_identifier(subject):
+            subject_widgets['status'].setText('bad subject')
+            valid = False
+        elif project not in self.user_projects:
+            subject_widgets['status'].setText('new')
+        elif subject in self.subjects[project]:
+            subject_widgets['status'].setText('existing subject')
+        else:
+            subject_widgets['status'].setText('new')
+        return valid
+
+    def _validate_sessions(self, patient_id, project):
+        valid = True
+        for widgets in self.session_widgets[patient_id].itervalues():
+            session = str(widgets['edit'].text())
+            if not session:
+                widgets['status'].setText('no session')
+                valid = False
+            elif not self._validate_identifier(session):
+                widgets['status'].setText('bad session')
+                valid = False
+            elif project not in self.user_projects:
+                widgets['status'].setText('new')
+            elif session in self.sessions[project]:
+                widgets['status'].setText('exists')
+                valid = False
+            else:
+                widgets['status'].setText('new')
+        return valid
+
+    def validate(self, string=None):
+        valid = True
+        # get and sort the patient IDs
+        # we then reverse the checks so the error message we're left with is 
+        # for the earliest error
+        patient_ids = self.project_widgets.keys()
+        patient_ids.sort()
+        patient_ids.reverse()
+        for patient_id in patient_ids:
+            if not self._validate_project(patient_id):
+                valid = False
+                self.error_label.setText('Error in %s.' % patient_id)
+        if valid:
+            self.error_label.setText('')
+            self.upload_button.setEnabled(True)
+        else:
+            self.upload_button.setEnabled(False)
         return
 
     def _validate_identifier(self, identifier):
@@ -172,75 +564,6 @@ class InfoDialog(QtGui.QDialog):
             if c not in string.letters + string.digits + '_':
                 return False
         return True
-
-    def _validate_session(self, project_id, session_edit, session_status):
-        identifier = str(session_edit.text())
-        if not identifier or not self._validate_identifier(identifier):
-            session_status.setText('bad identifier')
-            rv = False
-        elif project_id in sessions and identifier in sessions[project_id]:
-            session_status.setText('existing session')
-            rv = False
-        else:
-            session_status.setText('new session')
-            rv = True
-        return rv
-
-    def _validate_subject(self, project_id, subject_edit, subject_status, 
-                                            session_edit, session_status):
-        identifier = str(subject_edit.text())
-        if not identifier or not self._validate_identifier(identifier):
-            subject_status.setText('bad identifier')
-            rv = False
-        elif project_id in subjects and identifier in subjects[project_id]:
-            subject_status.setText('existing subject')
-            rv = True
-        else:
-            subject_status.setText('new subject')
-            rv = True
-        if not self._validate_session(project_id, session_edit, session_status):
-            return False
-        return rv
-
-    def _validate_project(self, project_edit, project_status, 
-                                subject_edit, subject_status, 
-                                session_edit, session_status):
-        identifier = str(project_edit.text())
-        if not identifier or not self._validate_identifier(identifier):
-            project_status.setText('bad identifier')
-            rv = False
-        elif identifier not in projects:
-            project_status.setText('new project')
-            rv = True
-        elif projects[identifier]:
-            project_status.setText('existing project')
-            rv = True
-        else:
-            project_status.setText('permission denied')
-            rv = False
-        if not self._validate_subject(identifier, subject_edit, subject_status, 
-                                                  session_edit, session_status):
-            return False
-        return rv
-
-    def validate(self, string=None):
-        rv1 = self._validate_project(self.subject_1_project_edit, 
-                                     self.subject_1_project_status, 
-                                     self.subject_1_subject_edit, 
-                                     self.subject_1_subject_status, 
-                                     self.session_1_edit, 
-                                     self.session_1_status)
-        rv2 = self._validate_project(self.subject_2_project_edit, 
-                                     self.subject_2_project_status, 
-                                     self.subject_2_subject_edit, 
-                                     self.subject_2_subject_status, 
-                                     self.session_2_edit, 
-                                     self.session_2_status)
-        if rv1 and rv2:
-            self.upload_button.setEnabled(True)
-        else:
-            self.upload_button.setEnabled(False)
-        return
 
     def quit(self):
         self.app.quit_dialog.show()
@@ -274,12 +597,13 @@ class LoginDialog(QtGui.QDialog):
         self.info_label.setText('Authenticating...')
         # this will allow the label to update
         self.app.processEvents()
-        time.sleep(1)
-        if self.login_edit.text() != 'christian' \
-           or self.password_edit.text() != 'ch':
+        try:
+            self.app.xnat = XNAT(self.app.server_conf['xnat_base'], 
+                                 self.login_edit.text(), 
+                                 self.password_edit.text())
+        except ValueError:
             self.info_label.setText('Authentication failed')
             return
-        self.jsessionid = 'jsessionid'
         self.app.get_upload_info()
         return
 
@@ -314,7 +638,6 @@ class FileLoaderDialog(QtGui.QDialog):
         uic.loadUi('ui/file_loader_dialog.ui', self)
         self.app = app
         self.paths = paths
-        self.continue_button.setEnabled(False)
         self.status_label.setText('Scanning for files...')
         self.progress.setRange(0, 1)
         self.progress.setValue(0)
@@ -335,21 +658,29 @@ class FileLoaderDialog(QtGui.QDialog):
         return
 
     def read(self):
-        self.dicom_files = []
+        # dicom_files[PatientID][StudyInstanceUID] -> list of file names
+        dicom_files = {}
+        # studies[StudyInstanceUID] -> (study date, study time)
+        studies = {}
         self.progress.setMaximum(len(self.files))
         for (i, fname) in enumerate(self.files):
             msg = 'Scanning files (%d of %d)...' % (i+1, len(self.files))
             self.status_label.setText(msg)
             self.progress.setValue(i+1)
             try:
-                do = dicom.read_file(fname)
+                do = read_dicom_file(fname)
+                patient_files = dicom_files.setdefault(do.PatientID, {})
+                patient_files.setdefault(do.StudyInstanceUID, []).append(fname)
+                if do.StudyInstanceUID not in studies:
+                    t = (do.StudyDate, do.StudyTime)
+                    studies[do.StudyInstanceUID] = t
             except:
                 pass
-            else:
-                self.dicom_files.append(fname)
             self.app.processEvents()
             if self.quit_called:
                 return
+        self.app.dicom_files = dicom_files
+        self.app.studies = studies
         return
 
     def quit(self):
@@ -357,17 +688,6 @@ class FileLoaderDialog(QtGui.QDialog):
         if self.app.quit_dialog.exec_():
             self.quit_called = True
         return
-
-class NoDCMTKDialog(QtGui.QDialog):
-
-    def __init__(self, app):
-        QtGui.QDialog.__init__(self)
-        uic.loadUi('ui/no_dcmtk_dialog.ui', self)
-        self.app = app
-        return
-
-    def quit(self):
-        self.app.quit()
 
 class AgreementDialog(QtGui.QDialog):
 

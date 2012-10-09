@@ -6,12 +6,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>378</width>
-    <height>539</height>
+    <width>510</width>
+    <height>547</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Information</string>
   </property>
   <widget class="QPushButton" name="upload_button">
    <property name="geometry">
@@ -42,301 +42,46 @@
     <string>Quit</string>
    </property>
   </widget>
-  <widget class="QLineEdit" name="subject_1_project_edit">
-   <property name="geometry">
-    <rect>
-     <x>100</x>
-     <y>150</y>
-     <width>113</width>
-     <height>22</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QLabel" name="subject_1_project_status">
-   <property name="geometry">
-    <rect>
-     <x>230</x>
-     <y>150</y>
-     <width>181</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>TextLabel</string>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="subject_1_subject_edit">
-   <property name="geometry">
-    <rect>
-     <x>100</x>
-     <y>180</y>
-     <width>113</width>
-     <height>22</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label">
-   <property name="geometry">
-    <rect>
-     <x>40</x>
-     <y>150</y>
-     <width>62</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Project:</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_10">
-   <property name="geometry">
-    <rect>
-     <x>70</x>
-     <y>390</y>
-     <width>191</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Session: 2012-08-15 16:43</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="subject_1_label">
-   <property name="geometry">
-    <rect>
-     <x>40</x>
-     <y>120</y>
-     <width>111</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Subject 1: P0196</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="session_2_status">
-   <property name="geometry">
-    <rect>
-     <x>260</x>
-     <y>420</y>
-     <width>181</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>TextLabel</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_13">
-   <property name="geometry">
-    <rect>
-     <x>70</x>
-     <y>420</y>
-     <width>62</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Session:</string>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="session_1_edit">
-   <property name="geometry">
-    <rect>
-     <x>130</x>
-     <y>250</y>
-     <width>113</width>
-     <height>22</height>
-    </rect>
-   </property>
-  </widget>
   <widget class="QLabel" name="info_label">
    <property name="geometry">
     <rect>
      <x>40</x>
      <y>20</y>
-     <width>241</width>
-     <height>16</height>
+     <width>351</width>
+     <height>41</height>
     </rect>
    </property>
    <property name="text">
-    <string>Two subjects and two sessions found.</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_5">
-   <property name="geometry">
-    <rect>
-     <x>70</x>
-     <y>220</y>
-     <width>191</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Session: 2012-08-13 14:34</string>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="subject_2_project_edit">
-   <property name="geometry">
-    <rect>
-     <x>100</x>
-     <y>320</y>
-     <width>113</width>
-     <height>22</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QLabel" name="subject_1_subject_status">
-   <property name="geometry">
-    <rect>
-     <x>230</x>
-     <y>180</y>
-     <width>181</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>TextLabel</string>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="subject_2_subject_edit">
-   <property name="geometry">
-    <rect>
-     <x>100</x>
-     <y>350</y>
-     <width>113</width>
-     <height>22</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QLabel" name="subject_2_project_status">
-   <property name="geometry">
-    <rect>
-     <x>230</x>
-     <y>320</y>
-     <width>181</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>TextLabel</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="subject_1_label_2">
-   <property name="geometry">
-    <rect>
-     <x>40</x>
-     <y>290</y>
-     <width>111</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Subject 2: P0197</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_15">
-   <property name="geometry">
-    <rect>
-     <x>40</x>
-     <y>350</y>
-     <width>62</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Subject:</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_4">
-   <property name="geometry">
-    <rect>
-     <x>40</x>
-     <y>40</y>
-     <width>231</width>
-     <height>61</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Please choose projects and subjects and create sessions.</string>
+    <string>Please provide identifiers for the subjects and sessions to upload.</string>
    </property>
    <property name="wordWrap">
     <bool>true</bool>
    </property>
   </widget>
-  <widget class="QLabel" name="subject_2_subject_status">
+  <widget class="QTabWidget" name="tab_widget">
    <property name="geometry">
     <rect>
-     <x>230</x>
-     <y>350</y>
-     <width>181</width>
-     <height>16</height>
+     <x>20</x>
+     <y>80</y>
+     <width>421</width>
+     <height>341</height>
+    </rect>
+   </property>
+   <property name="currentIndex">
+    <number>-1</number>
+   </property>
+  </widget>
+  <widget class="QLabel" name="error_label">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>440</y>
+     <width>331</width>
+     <height>41</height>
     </rect>
    </property>
    <property name="text">
-    <string>TextLabel</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_11">
-   <property name="geometry">
-    <rect>
-     <x>40</x>
-     <y>320</y>
-     <width>62</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Project:</string>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="session_2_edit">
-   <property name="geometry">
-    <rect>
-     <x>130</x>
-     <y>420</y>
-     <width>113</width>
-     <height>22</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QLabel" name="session_1_status">
-   <property name="geometry">
-    <rect>
-     <x>260</x>
-     <y>250</y>
-     <width>181</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>TextLabel</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_2">
-   <property name="geometry">
-    <rect>
-     <x>70</x>
-     <y>250</y>
-     <width>62</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Session:</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_3">
-   <property name="geometry">
-    <rect>
-     <x>40</x>
-     <y>180</y>
-     <width>62</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Subject:</string>
+    <string/>
    </property>
   </widget>
  </widget>

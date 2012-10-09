@@ -6,26 +6,13 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>284</width>
-    <height>194</height>
+    <width>282</width>
+    <height>139</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Scanning</string>
   </property>
-  <widget class="QPushButton" name="continue_button">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>130</y>
-     <width>114</width>
-     <height>32</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Continue</string>
-   </property>
-  </widget>
   <widget class="QLabel" name="status_label">
    <property name="geometry">
     <rect>
