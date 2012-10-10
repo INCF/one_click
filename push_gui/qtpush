@@ -537,21 +537,41 @@ class InfoDialog(QtGui.QDialog):
         return valid
 
     def validate(self, string=None):
-        valid = True
-        # get and sort the patient IDs
-        # we then reverse the checks so the error message we're left with is 
-        # for the earliest error
-        patient_ids = self.project_widgets.keys()
-        patient_ids.sort()
-        patient_ids.reverse()
-        for patient_id in patient_ids:
+        error_patients = set()
+        for patient_id in self.project_widgets:
             if not self._validate_project(patient_id):
-                valid = False
-                self.error_label.setText('Error in %s.' % patient_id)
-        if valid:
+                error_patients.add(patient_id)
+        # check for duplicate session IDs
+        # session_ids[project][session_id] -> list of (edit, status) widget tuples
+        session_ids = {}
+        # patient_ids[project] -> list of patient ids
+        patient_ids = {}
+        for patient_id in self.session_widgets:
+            for session_widgets in self.session_widgets[patient_id].itervalues():
+                if not session_widgets['edit'].isEnabled():
+                    continue
+                session_id = str(session_widgets['edit'].text())
+                if not session_id or not self._validate_identifier(session_id):
+                    continue
+                project = self.project_widgets[patient_id]['edit'].text()
+                patient_ids.setdefault(project, []).append(patient_id)
+                d = session_ids.setdefault(project, {})
+                d.setdefault(session_id, []).append(session_widgets)
+        for project in session_ids:
+            for session_id in session_ids[project]:
+                widget_list = session_ids[project][session_id]
+                if len(widget_list) > 1:
+                    for widgets in widget_list:
+                        widgets['status'].setText('duplicate')
+                    for patient_id in patient_ids[project]:
+                        error_patients.add(patient_id)
+        if not error_patients:
             self.error_label.setText('')
             self.upload_button.setEnabled(True)
         else:
+            # find the first project with an error
+            patient_id = sorted(error_patients)[0]
+            self.error_label.setText('Error in %s.' % patient_id)
             self.upload_button.setEnabled(False)
         return
 
