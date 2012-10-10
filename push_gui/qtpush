@@ -7,12 +7,13 @@
 
 import sys
 import os
+import tempfile
+import shutil
 import string
-import subprocess
+import uuid
 import csv
+import subprocess
 import StringIO
-# TODO remove this (time)
-import time
 from PyQt4 import QtCore, QtGui, uic
 import httplib2
 import dicom
@@ -37,13 +38,40 @@ projects = {'christian': True,
 
 conf_url = 'http://xnat.incf.org/conf.txt'
 
-#TODO remove
-# subjects[project] -> list of subjects
-subjects = {'christian': ['subj1', 'subj2']}
+files_per_push = 5
 
-#TODO remove
-# sessions[project] -> list of sessions
-sessions = {'christian': ['subj1_sess1', 'subj1_sess2']}
+# our cache of new UIDs: uids[old UID] -> new UID
+uids = {}
+
+deident_tags = [(0x0008, 0x0050), # Accession Number
+                (0x0008, 0x0080), # InstitutionName
+                (0x0008, 0x0090), # Referring Physician's Name
+                (0x0008, 0x0096), # Referring Physician Identification
+                (0x0008, 0x1048), # Physician(s) of Record
+                (0x0008, 0x1049), # Physician(s) of Record Identification
+                (0x0008, 0x1050), # Performing Physicians' Name
+                (0x0008, 0x1052), # Performing Physician Identification
+                (0x0008, 0x1060), # Name of Physician(s) Reading Study
+                (0x0008, 0x1062), # Physician(s) Reading Study Identification
+                (0x0010, 0x0030), # Patient's Birth Date
+                (0x0010, 0x0050), # Patient's Insurance Plan Code SQ
+                (0x0010, 0x0101), # Patient's Primary Language Code SQ
+                (0x0010, 0x1000), # Other Patient IDs
+                (0x0010, 0x1001), # Other Patient Names
+                (0x0010, 0x1002), # Other Patient IDs SQ
+                (0x0010, 0x1005), # Patient's Birth Name
+                (0x0010, 0x1010), # Patient's Age
+                (0x0010, 0x1040), # Patient's Address
+                (0x0010, 0x1060), # Patient's Mother's Birth Name
+               ]
+
+# del dicom_object[(xxxx, yyyy)] doesn't work for me, but
+# del dicom_object[tag] does, where tag = dicom.tag.Tag((xxxx, yyyy))
+deident_tags = [ dicom.tag.Tag(tag) for tag in deident_tags ]
+
+# comments on performed procedure
+# if present, this can mess up the project change in the prearchive
+copp_tag = dicom.tag.Tag((0x0040, 0x0280))
 
 completion_msg = """Your upload is complete.  QC will be run on your data and you will be notified by e-mail when the QC reports are ready."""
 
@@ -246,6 +274,15 @@ def patient_studies(dicom_files, studies, patient_id):
         el[0] = '%s-%s-%s %s:%s:%s' % date_time_parts
     return ps
 
+def new_uid(old_uid):
+    """Create a new DICOM UID.
+
+    Return an already-created UID if the old UID has already been replaced.
+    """
+    if old_uid not in uids:
+        uids[old_uid] = '2.25.%d' % uuid.uuid1().int
+    return uids[old_uid]
+
 #############################################################################
 # GUI elements
 #
@@ -261,6 +298,15 @@ class Application(QtGui.QApplication):
         # self.studies[StudyInstanceUID] -> (study date, study time)
         # set by self.file_loader
         self.studies = None
+        # self.projects[PatientID] -> XNAT project
+        # set by self.info_dialog
+        self.projects = None
+        # self.projects[PatientID] -> XNAT subject
+        # set by self.info_dialog
+        self.subjects = None
+        # self.projects[StudyInstanceUID] -> XNAT session
+        # set by self.info_dialog
+        self.sessions = None
         QtGui.QApplication.__init__(self, argv)
         self.quit_dialog = QuitDialog(self)
         # set this to true for a clean exit if there are any startup errors
@@ -300,19 +346,14 @@ class Application(QtGui.QApplication):
         self.file_loader.scan()
         self.file_loader.read()
         self.file_loader.hide()
-# DEVEL
-        self.xnat = XNAT(self.server_conf['xnat_base'], 
-                         'christian', 
-                         open('pw').read().strip())
         if self.file_loader.quit_called:
             return False
         elif not self.dicom_files:
             self.show_exit_notice('No dicom files found.')
             return False
         else:
-# DEVEL
-#            self.agreement_dialog = AgreementDialog(self)
-#            self.agreement_dialog.show()
+            self.agreement_dialog = AgreementDialog(self)
+            self.agreement_dialog.show()
             self.get_upload_info()
         return True
 
@@ -323,8 +364,7 @@ class Application(QtGui.QApplication):
         return
 
     def get_upload_info(self):
-# DEVEL
-#        self.login_dialog.hide()
+        self.login_dialog.hide()
         self.info_dialog = InfoDialog(self)
         self.info_dialog.show()
         return
@@ -351,31 +391,124 @@ class UploadDialog(QtGui.QDialog):
     def __init__(self, app):
         QtGui.QDialog.__init__(self)
         uic.loadUi('ui/upload_dialog.ui', self)
-        self.progress.setRange(0, 2000)
+        self.info_label.setText('Preparing to upload...')
+        self.app = app
+        self.n_files = 0
+        self.n_prepped = 0
+        self.n_sent = 0
+        for patient_id in self.app.dicom_files:
+            for study_instance_uid in self.app.dicom_files[patient_id]:
+                n = len(self.app.dicom_files[patient_id][study_instance_uid])
+                self.n_files += n
+        self.progress.setRange(0, 2*self.n_files)
         self.progress.setValue(0)
         self.state = 'uploading'
-        self.app = app
         return
 
     def upload(self):
-        self.info_label.setText('Sending subject 1 of 2...')
         self.quit_called = False
-        for i in xrange(1000):
-            time.sleep(0.01)
-            self.progress.setValue(i+1)
-            self.app.processEvents()
-            if self.quit_called:
-                return
-        self.info_label.setText('Sending subject 2 of 2...')
-        for i in xrange(1000):
-            time.sleep(0.01)
-            self.progress.setValue(1000+i+1)
-            self.app.processEvents()
-            if self.quit_called:
-                return
+        for patient_id in self.app.dicom_files:
+            for study_instance_uid in self.app.dicom_files[patient_id]:
+                self.send_session(patient_id, study_instance_uid)
+                if self.quit_called:
+                    return
         self.stop_button.setText('Quit')
         self.info_label.setText(completion_msg)
         self.state = 'done'
+        return
+
+    def send_session(self, patient_id, study_instance_uid):
+        project = self.app.projects[patient_id]
+        subject = self.app.subjects[patient_id]
+        session = self.app.sessions[study_instance_uid]
+        if project not in self.app.xnat.projects():
+            self.app.xnat.create_project(project)
+        if subject not in self.app.xnat.subjects(project):
+            self.app.xnat.create_subject(project, subject)
+        if session not in self.app.xnat.sessions(project):
+            self.app.xnat.create_session(project, subject, session)
+        files = self.app.dicom_files[patient_id][study_instance_uid]
+        prepped_files = []
+        tempdir = tempfile.mkdtemp()
+        try:
+            for fname in files:
+                msg = 'Preparing file %d of %d...' % (self.n_prepped+1, 
+                                                      self.n_files)
+                self.info_label.setText(msg)
+                do = read_dicom_file(fname)
+                study_comments = 'incf 2\n'
+                study_comments += 'upload_agreement signed\n'
+                study_comments += 'user %s\n' % self.app.xnat.user_name
+                study_comments += 'project %s' % project
+                do.StudyComments = study_comments
+                do.PatientName = subject
+                do.PatientID = session
+                for name in ('SOPInstanceUID',
+                             'StudyInstanceUID',
+                             'SeriesInstanceUID',
+                             'FrameOfReferenceUID'):
+                    try:
+                        el = do.data_element(name)
+                    except KeyError:
+                        pass
+                    else:
+                        if el is not None:
+                            do.data_element(name).value = new_uid(el.value)
+                for tag in deident_tags:
+                    if tag in do:
+                        del do[tag]
+                if copp_tag in do:
+                    del do[copp_tag]
+                out_fname = '%s/%08d' % (tempdir, len(prepped_files))
+                dicom.write_file(out_fname, do)
+                prepped_files.append(out_fname)
+                self.n_prepped += 1
+                self.progress.setValue(self.n_prepped+self.n_sent)
+                self.app.processEvents()
+                if self.quit_called:
+                    return
+            # chunk our sends (files_per_push files per storescu call)
+            while prepped_files:
+                args = ['storescu', 
+                        '-v', 
+                        '-aec', 
+                        'XNAT', 
+                        self.app.server_conf['push_host'], 
+                        self.app.server_conf['push_port']]
+                args.extend(prepped_files[:files_per_push])
+                po = subprocess.Popen(args, 
+                                      stdout=subprocess.PIPE, 
+                                      stderr=subprocess.STDOUT)
+                # first loop while storescu is running...
+                msg = 'Sending file %d of %d...' % (self.n_sent+1, self.n_files)
+                self.info_label.setText(msg)
+                self.progress.setValue(self.n_prepped+self.n_sent)
+                self.app.processEvents()
+                if self.quit_called:
+                    return
+                while True:
+                    line = po.stdout.readline()
+                    if 'Releasing Association' in line:
+                        break
+                    if 'Sending Store Request' in line:
+                        self.n_sent += 1
+                        msg = 'Sending file %d of %d...' % (self.n_sent+1, 
+                                                            self.n_files)
+                        self.info_label.setText(msg)
+                        self.progress.setValue(self.n_prepped+self.n_sent)
+                        self.app.processEvents()
+                        if self.quit_called:
+                            return
+                    if not line:
+                        break
+                try:
+                    po.wait()
+                except OSError:
+                    # ignore the errno 4 (interrupted system call) -- known bug
+                    pass
+                prepped_files = prepped_files[files_per_push:]
+        finally:
+            shutil.rmtree(tempdir)
         return
 
     def quit(self):
@@ -592,6 +725,17 @@ class InfoDialog(QtGui.QDialog):
         return
 
     def upload(self):
+        self.app.projects = {}
+        for (patient_id, widgets) in self.project_widgets.iteritems():
+            self.app.projects[patient_id] = str(widgets['edit'].text())
+        self.app.subjects = {}
+        for (patient_id, widgets) in self.subject_widgets.iteritems():
+            self.app.subjects[patient_id] = str(widgets['edit'].text())
+        self.app.sessions = {}
+        for session_dict in self.session_widgets.itervalues():
+            for (study_instance_uid, widgets) in session_dict.iteritems():
+                session_id = str(widgets['edit'].text())
+                self.app.sessions[study_instance_uid] = session_id
         self.app.upload()
         return
 
