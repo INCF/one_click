@@ -39,6 +39,13 @@ $page.setVlinkColor($ui.vlink)
 		</TD>
 	</TR>
 	<TR>
+        <TD>
+<p>
+This diffusion quality assessment is the result of a <a href="https://www.nitrc.org/projects/dtiprep">DTIPrep</a> analysis.  <a href="http://slicer.org/">3D Slicer</a>'s <code>DicomToNrrdConverter</code> is used to create a NRRD volume, after which <code>DTIPrep -w scan.nrrd -p default -d -c</code> is run.
+</p>
+        </TD>
+	</TR>
+	<TR>
 		<TD>
 			<TABLE>
 
