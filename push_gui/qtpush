@@ -354,7 +354,6 @@ class Application(QtGui.QApplication):
         else:
             self.agreement_dialog = AgreementDialog(self)
             self.agreement_dialog.show()
-            self.get_upload_info()
         return True
 
     def login(self):
