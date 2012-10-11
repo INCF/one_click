@@ -130,7 +130,7 @@ then
 fi
 
 qa_dir=/home/ch/xnat-1.5.4/pipeline/catalog/incf/qa
-for qa in birn basic_structural
+for qa in birn basic_structural dtiprep
 do
     $qa_dir/$qa $user \
                 $password \
