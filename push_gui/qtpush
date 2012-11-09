@@ -783,6 +783,17 @@ class LoginDialog(QtGui.QDialog):
         except ValueError:
             self.info_label.setText('Authentication failed')
             return
+        self.app.processEvents()
+        self.info_label.setText('Getting server info (projects)...')
+        self.app.processEvents()
+        self.app.xnat.projects()
+        self.app.processEvents()
+        for project in self.app.xnat.user_projects():
+            self.info_label.setText('Getting server info (%s)...' % project)
+            self.app.processEvents()
+            self.app.xnat.subjects(project)
+            self.app.processEvents()
+            self.app.xnat.sessions(project)
         self.app.get_upload_info()
         return
 
