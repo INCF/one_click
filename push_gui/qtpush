@@ -521,6 +521,10 @@ class UploadDialog(QtGui.QDialog):
 
 class InfoDialog(QtGui.QDialog):
 
+    info_label_width = 50
+    info_edit_width = 100
+    info_status_width = 150
+
     def __init__(self, app):
         QtGui.QDialog.__init__(self)
         uic.loadUi('ui/info_dialog.ui', self)
@@ -539,26 +543,34 @@ class InfoDialog(QtGui.QDialog):
             project_widget = QtGui.QWidget()
             project_layout = QtGui.QHBoxLayout()
             project_widget.setLayout(project_layout)
-            project_layout.addWidget(QtGui.QLabel('Project'))
+            label_widget = QtGui.QLabel('Project')
+            label_widget.setFixedWidth(self.info_label_width)
+            project_layout.addWidget(label_widget)
             edit = QtGui.QLineEdit()
+            edit.setFixedWidth(self.info_edit_width)
             self.connect(edit, 
                          QtCore.SIGNAL('textEdited(QString)'), 
                          self.validate)
             project_layout.addWidget(edit)
             status = QtGui.QLabel()
+            status.setFixedWidth(self.info_status_width)
             project_layout.addWidget(status)
             layout.addWidget(project_widget)
             self.project_widgets[patient_id] = {'edit': edit, 'status': status}
             subject_widget = QtGui.QWidget()
             subject_layout = QtGui.QHBoxLayout()
             subject_widget.setLayout(subject_layout)
+            label_widget = QtGui.QLabel('Subject')
+            label_widget.setFixedWidth(self.info_label_width)
             subject_layout.addWidget(QtGui.QLabel('Subject'))
             edit = QtGui.QLineEdit()
+            edit.setFixedWidth(self.info_edit_width)
             self.connect(edit, 
                          QtCore.SIGNAL('textEdited(QString)'), 
                          self.validate)
             subject_layout.addWidget(edit)
             status = QtGui.QLabel()
+            status.setFixedWidth(self.info_status_width)
             subject_layout.addWidget(status)
             layout.addWidget(subject_widget)
             self.subject_widgets[patient_id] = {'edit': edit, 'status': status}
@@ -570,13 +582,17 @@ class InfoDialog(QtGui.QDialog):
                 session_widget = QtGui.QWidget()
                 session_layout = QtGui.QHBoxLayout()
                 session_widget.setLayout(session_layout)
-                session_layout.addWidget(QtGui.QLabel('Session'))
+                label_widget = QtGui.QLabel('Session')
+                label_widget.setFixedWidth(self.info_label_width)
+                session_layout.addWidget(label_widget)
                 edit = QtGui.QLineEdit()
+                edit.setFixedWidth(self.info_edit_width)
                 self.connect(edit, 
                              QtCore.SIGNAL('textEdited(QString)'), 
                              self.validate)
                 session_layout.addWidget(edit)
                 status = QtGui.QLabel('status')
+                status.setFixedWidth(self.info_status_width)
                 session_layout.addWidget(status)
                 sw = self.session_widgets.setdefault(patient_id, {})
                 sw[study_instance_uid] = {'edit': edit, 'status': status}
