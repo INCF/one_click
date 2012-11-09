@@ -3,8 +3,6 @@
 # See file COPYING distributed with the one_click package for the copyright
 # and license.
 
-# TODO: server configuration
-
 import sys
 import os
 import tempfile
@@ -30,11 +28,6 @@ except:
     have_storescu = False
 else:
     have_storescu = True
-
-#TODO remove
-# projects[identifier] -> have permission to upload
-projects = {'christian': True, 
-            'rembrandt': False}
 
 conf_url = 'http://xnat.incf.org/conf.txt'
 
@@ -772,7 +765,6 @@ class LoginDialog(QtGui.QDialog):
         return
 
     def authenticate(self):
-        # TODO real authentication
         self.info_label.setText('Authenticating...')
         # this will allow the label to update
         self.app.processEvents()
