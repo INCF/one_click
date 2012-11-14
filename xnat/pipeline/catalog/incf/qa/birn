@@ -255,7 +255,7 @@ os.environ['PATH'] = os.environ['PATH'] + ':/usr/lib/afni/bin'
 
 if len(sys.argv) != 7:
     print 'usage: %s <user> <password> <XNAT URL> <project> <experiment ID> <experiment label>' % progname
-    sys.exit(0)
+    sys.exit(1)
 
 user = sys.argv[1]
 password = sys.argv[2]
