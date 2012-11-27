@@ -140,7 +140,24 @@ This time-series quality assessment is the result of a <a href="https://www.nitr
                     <TD align="left" valign="top">$!item.getDoubleProperty("incf:BIRNfMRIQAData/MaskedDetrended/MeanSFNRROIMiddleSlice")</TD>
                 </TR>
             </TABLE>
-
+        </TD>
+    </TR>
+    <TR>
+        <TD>
+			This plot shows SNR for this scan on a histogram of all BIRN functional QA SNRs in this archive.
+            <br/>
+			<IMG SRC="/plots/birn_fmri/snr/$!item.getStringProperty("incf:BIRNfMRIQAData/MaskedDetrended/MeanSNRROIMiddleSlice")" />
+        </TD>
+    </TR>
+    <TR>
+        <TD>
+			This plot shows SFNR for this scan on a histogram of all BIRN functional QA SFNRs in this archive.
+            <br/>
+			<IMG SRC="/plots/birn_fmri/sfnr/$!item.getStringProperty("incf:BIRNfMRIQAData/MaskedDetrended/MeanSFNRROIMiddleSlice")" />
+        </TD>
+    </TR>
+    <TR>
+        <TD>
 <br/>
 <font face="$ui.sansSerifFonts" size="2"><b>Volume means (input)</b></font>
 <br/>

@@ -41,6 +41,11 @@ $page.setVlinkColor($ui.vlink)
 	<TR>
 		<TD>
 			SNR = $!item.getStringProperty("incf:BasicStructuralQAData/SNR")
+			<br/>
+			<br/>
+			This plot shows SNR for this scan on a histogram of all SNRs in this archive.
+			<br/>
+			<IMG SRC="/plots/basic_structural/snr/$!item.getStringProperty("incf:BasicStructuralQAData/SNR")" />
 		</TD>
 	</TR>
 	<TR>
@@ -78,7 +83,10 @@ $page.setVlinkColor($ui.vlink)
 <!-- END incf:BasicStructuralQAData -->
 		</TD>
 	</TR>
-</TABLE><BR>#parse("/screens/ReportProjectSpecificFields.vm")
+</TABLE><BR>
+
+
+<br />
 
 <font face="$ui.sansSerifFonts" size="2"><b>About this Structural QA</b></font>
 
