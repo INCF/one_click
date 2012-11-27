@@ -40,7 +40,7 @@ progname = os.path.basename(sys.argv[0])
 
 if len(sys.argv) != 7:
     print 'usage: %s <user> <password> <XNAT URL> <project> <experiment ID> <experiment label>' % progname
-    sys.exit(0)
+    sys.exit(1)
 
 user = sys.argv[1]
 password = sys.argv[2]

@@ -3,8 +3,6 @@
 # See file COPYING distributed with the one_click package for the copyright
 # and license.
 
-# TODO: server configuration
-
 import sys
 import os
 import tempfile
@@ -30,11 +28,6 @@ except:
     have_storescu = False
 else:
     have_storescu = True
-
-#TODO remove
-# projects[identifier] -> have permission to upload
-projects = {'christian': True, 
-            'rembrandt': False}
 
 conf_url = 'http://xnat.incf.org/conf.txt'
 
@@ -521,6 +514,10 @@ class UploadDialog(QtGui.QDialog):
 
 class InfoDialog(QtGui.QDialog):
 
+    info_label_width = 50
+    info_edit_width = 100
+    info_status_width = 150
+
     def __init__(self, app):
         QtGui.QDialog.__init__(self)
         uic.loadUi('ui/info_dialog.ui', self)
@@ -539,26 +536,34 @@ class InfoDialog(QtGui.QDialog):
             project_widget = QtGui.QWidget()
             project_layout = QtGui.QHBoxLayout()
             project_widget.setLayout(project_layout)
-            project_layout.addWidget(QtGui.QLabel('Project'))
+            label_widget = QtGui.QLabel('Project')
+            label_widget.setFixedWidth(self.info_label_width)
+            project_layout.addWidget(label_widget)
             edit = QtGui.QLineEdit()
+            edit.setFixedWidth(self.info_edit_width)
             self.connect(edit, 
                          QtCore.SIGNAL('textEdited(QString)'), 
                          self.validate)
             project_layout.addWidget(edit)
             status = QtGui.QLabel()
+            status.setFixedWidth(self.info_status_width)
             project_layout.addWidget(status)
             layout.addWidget(project_widget)
             self.project_widgets[patient_id] = {'edit': edit, 'status': status}
             subject_widget = QtGui.QWidget()
             subject_layout = QtGui.QHBoxLayout()
             subject_widget.setLayout(subject_layout)
+            label_widget = QtGui.QLabel('Subject')
+            label_widget.setFixedWidth(self.info_label_width)
             subject_layout.addWidget(QtGui.QLabel('Subject'))
             edit = QtGui.QLineEdit()
+            edit.setFixedWidth(self.info_edit_width)
             self.connect(edit, 
                          QtCore.SIGNAL('textEdited(QString)'), 
                          self.validate)
             subject_layout.addWidget(edit)
             status = QtGui.QLabel()
+            status.setFixedWidth(self.info_status_width)
             subject_layout.addWidget(status)
             layout.addWidget(subject_widget)
             self.subject_widgets[patient_id] = {'edit': edit, 'status': status}
@@ -570,13 +575,17 @@ class InfoDialog(QtGui.QDialog):
                 session_widget = QtGui.QWidget()
                 session_layout = QtGui.QHBoxLayout()
                 session_widget.setLayout(session_layout)
-                session_layout.addWidget(QtGui.QLabel('Session'))
+                label_widget = QtGui.QLabel('Session')
+                label_widget.setFixedWidth(self.info_label_width)
+                session_layout.addWidget(label_widget)
                 edit = QtGui.QLineEdit()
+                edit.setFixedWidth(self.info_edit_width)
                 self.connect(edit, 
                              QtCore.SIGNAL('textEdited(QString)'), 
                              self.validate)
                 session_layout.addWidget(edit)
                 status = QtGui.QLabel('status')
+                status.setFixedWidth(self.info_status_width)
                 session_layout.addWidget(status)
                 sw = self.session_widgets.setdefault(patient_id, {})
                 sw[study_instance_uid] = {'edit': edit, 'status': status}
@@ -601,18 +610,18 @@ class InfoDialog(QtGui.QDialog):
         widgets = self.project_widgets[patient_id]
         project = str(widgets['edit'].text())
         if not project:
-            widgets['status'].setText('no project')
+            widgets['status'].setText('No project given')
             valid = False
         elif not self._validate_identifier(project):
-            widgets['status'].setText('bad project')
+            widgets['status'].setText('Bad project name')
             valid = False
         elif project in self.user_projects:
-            widgets['status'].setText('exists')
+            widgets['status'].setText('Project exists')
         elif project in self.projects:
-            widgets['status'].setText('perm err')
+            widgets['status'].setText('Permission denied')
             valid = False
         else:
-            widgets['status'].setText('new')
+            widgets['status'].setText('New project')
         if not valid:
             self.subject_widgets[patient_id]['edit'].setEnabled(False)
             self.subject_widgets[patient_id]['status'].setText('')
@@ -636,17 +645,17 @@ class InfoDialog(QtGui.QDialog):
         subject_widgets = self.subject_widgets[patient_id]
         subject = str(subject_widgets['edit'].text())
         if not subject:
-            subject_widgets['status'].setText('no subject')
+            subject_widgets['status'].setText('No subject given')
             valid = False
         elif not self._validate_identifier(subject):
-            subject_widgets['status'].setText('bad subject')
+            subject_widgets['status'].setText('Bad subject name')
             valid = False
         elif project not in self.user_projects:
-            subject_widgets['status'].setText('new')
+            subject_widgets['status'].setText('New subject')
         elif subject in self.subjects[project]:
-            subject_widgets['status'].setText('existing subject')
+            subject_widgets['status'].setText('Existing subject')
         else:
-            subject_widgets['status'].setText('new')
+            subject_widgets['status'].setText('New subject')
         return valid
 
     def _validate_sessions(self, patient_id, project):
@@ -654,18 +663,18 @@ class InfoDialog(QtGui.QDialog):
         for widgets in self.session_widgets[patient_id].itervalues():
             session = str(widgets['edit'].text())
             if not session:
-                widgets['status'].setText('no session')
+                widgets['status'].setText('No session given')
                 valid = False
             elif not self._validate_identifier(session):
-                widgets['status'].setText('bad session')
+                widgets['status'].setText('Bad session name')
                 valid = False
             elif project not in self.user_projects:
-                widgets['status'].setText('new')
+                widgets['status'].setText('New session')
             elif session in self.sessions[project]:
-                widgets['status'].setText('exists')
+                widgets['status'].setText('Session exists')
                 valid = False
             else:
-                widgets['status'].setText('new')
+                widgets['status'].setText('New session')
         return valid
 
     def validate(self, string=None):
@@ -756,7 +765,6 @@ class LoginDialog(QtGui.QDialog):
         return
 
     def authenticate(self):
-        # TODO real authentication
         self.info_label.setText('Authenticating...')
         # this will allow the label to update
         self.app.processEvents()
@@ -767,6 +775,17 @@ class LoginDialog(QtGui.QDialog):
         except ValueError:
             self.info_label.setText('Authentication failed')
             return
+        self.app.processEvents()
+        self.info_label.setText('Getting server info (projects)...')
+        self.app.processEvents()
+        self.app.xnat.projects()
+        self.app.processEvents()
+        for project in self.app.xnat.user_projects():
+            self.info_label.setText('Getting server info (%s)...' % project)
+            self.app.processEvents()
+            self.app.xnat.subjects(project)
+            self.app.processEvents()
+            self.app.xnat.sessions(project)
         self.app.get_upload_info()
         return
 
