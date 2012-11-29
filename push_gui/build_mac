@@ -1,0 +1,48 @@
+#!/bin/sh
+
+set -e
+
+if [ -d mac ]
+then
+    echo "mac/ exists" >&2
+    exit 1
+fi
+
+mkdir mac
+cd mac
+
+virtualenv -p /usr/local/bin/python2.7 .
+
+tar zxvf ../sip-4.13.3.tar.gz 
+cd sip-4.13.3/
+../bin/python configure.py 
+make
+make install
+cd ..
+
+tar zxvf ../PyQt-mac-gpl-4.9.4.tar.gz 
+cd PyQt-mac-gpl-4.9.4/
+../bin/python configure.py 
+make
+make install
+cd ..
+
+./bin/easy_install py2app
+./bin/easy_install httplib2
+./bin/easy_install pydicom
+mkdir qtpush
+sed 's+ui/++' ../qtpush > qtpush/qtpush.py
+cp -v ../setup.py qtpush/.
+cp -v ../mac_icon.icns qtpush/.
+cp -v ../ui/* qtpush/.
+cd qtpush
+../bin/python setup.py py2app
+cp ../../storescu dist/qtpush.app/Contents/Resources/.
+
+echo
+echo done
+echo
+
+exit 0
+
+# eof

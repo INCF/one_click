@@ -1,0 +1,18 @@
+#!/bin/sh
+
+set -e
+
+if [ -d linux ]
+then
+    echo "linux/ exists" >&2
+    exit 1
+fi
+
+mkdir linux
+sed 's+ui/++' qtpush > linux/incf_push_qt
+chmod +x linux/incf_push_qt
+cp ui/* linux/.
+
+exit 0
+
+# eof

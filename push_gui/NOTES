@@ -1,0 +1,21 @@
+--- Building for Mac
+
+need sip-4.13.3.tar.gz, PyQt-mac-gpl-4.9.4.tar.gz, and storescu
+
+    rm -r mac/
+    ./build_mac
+    mkdir "INCF Push 1.0"
+    mv mac/qtpush/dist/qtpush.app "INCF Push 1.0/INCF Push.app"
+    cp README.mac.txt "INCF Push 1.0/README.txt"
+
+Create a link to /Applications in "INCF Push/"
+
+    hdiutil create -srcfolder "INCF Push 1.0" "INCF Push 1.0.dmg"
+
+--- Building for Linux
+
+    rm -r linux
+    ./build_linux
+    cp README.linux.txt linux/README
+    mv linux incf_push_qt-1.0
+    tar -zcvf incf_push_qt-1.0.tgz incf_push_qt-1.0
