@@ -13,6 +13,10 @@ sed 's+ui/++' qtpush > linux/incf_push_qt
 chmod +x linux/incf_push_qt
 cp ui/* linux/.
 
+echo
+echo done
+echo
+
 exit 0
 
 # eof
