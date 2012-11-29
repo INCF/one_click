@@ -1,7 +1,7 @@
 INCF Push 1.0
 November 29, 2012
-Christian Haselgrove
 http://xnat.incf.org/
+INCF Program on Standard for Datasharing
 
 Copyright 2012, Christian Haselgrove
 Released under the BSD License: http://opensource.org/licenses/BSD-2-Clause
