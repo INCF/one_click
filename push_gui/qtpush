@@ -11,6 +11,7 @@ import string
 import uuid
 import csv
 import subprocess
+import socket
 import StringIO
 from PyQt4 import QtCore, QtGui, uic
 import httplib2
@@ -60,6 +61,8 @@ copp_tag = dicom.tag.Tag((0x0040, 0x0280))
 completion_msg = """Your upload is complete.  QC will be run on your data and you will be notified by e-mail when the QC reports are ready."""
 
 server_config_msg = 'There was an error reading server configuration.  Please contact xnat-admin@incf.org for assistance.'
+
+connection_msg = 'INCF Push could not connect to the INCF server (%s port %d).  This could be because of an institutional firewall or because the server is down.  Please contact xnat-admin@incf.org for assistance.'
 
 no_dcmtk_msg = """storescu (the program used to send data to the server) was not found on your system.  Please install DCMTK (or adjust your path) before proceeding."""
 
@@ -320,6 +323,13 @@ class Application(QtGui.QApplication):
                 return False
         except:
             self.show_exit_notice(server_config_msg)
+            return False
+        try:
+            address = (self.server_conf['push_host'], 
+                       int(self.server_conf['push_port']))
+            c = socket.create_connection(address, 2)
+        except:
+            self.show_exit_notice(connection_msg % address)
             return False
         return True
 
