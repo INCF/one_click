@@ -1,5 +1,5 @@
-INCF Push 1.0
-November 29, 2012
+INCF Push 1.1
+March 11, 2013
 http://xnat.incf.org/
 INCF Program on Standard for Datasharing
 
