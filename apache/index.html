@@ -22,15 +22,17 @@
     <li class="first"><a href="/xnat/">Go to the database</a></li>
     <li>Downloads
         <ul>
-            <li><a href="incf_push">incf_push</a> (v2.0)</li>
+            <li>
+			<a href="incf_push">incf_push</a> (v2.0); requires:
+        	<ul class="deps">
+            	<li><a href="http://code.google.com/p/pydicom/">pydicom</a></li>
+            	<li><a href="http://code.google.com/p/httplib2/">httplib2</a></li>
+            	<li><a href="http://dicom.offis.de/dcmtk">DCMTK</a></li>
+        	</ul>
+			</li>
             <li><a href="incf_push_qt-1.1.tgz">GUI for Linux</a> (v1.1)</li>
             <li><a href="INCF Push 1.1-osx10.5.dmg">INCF Push for Mac OS 10.5</a> (v1.1)</li>
             <li><a href="INCF Push 1.1-osx10.6.dmg">INCF Push for Mac OS 10.6</a> (v1.1)</li>
-        </ul>
-        <ul>
-            <li><a href="http://code.google.com/p/pydicom/">pydicom</a></li>
-            <li><a href="http://code.google.com/p/httplib2/">httplib2</a></li>
-            <li><a href="http://dicom.offis.de/dcmtk">DCMTK</a></li>
         </ul>
     </li>
     <li>Contact
@@ -60,7 +62,7 @@ First <a href="http://www.incf.org/register">create an account</a> for yourself 
 <h2>That was easy.  Now what?</h2>
 
 <p>
-The server will process your data and send you notification when processing is complete.  You can then see <a href="http://www.nitrc.org/projects/bxh_xcede_tools/">BIRN QA</a> results on any time series data you sent and basic structural QA on structural data.
+The server will process your data and send you notification when processing is complete.  You can then see <a href="http://www.nitrc.org/projects/bxh_xcede_tools/">BIRN QA</a> results on any time series data you sent, basic structural QA on structural data, and <a href="https://www.nitrc.org/projects/dtiprep/">DTIPrep</a> results on diffusion data you sent.
 </p>
 
 <p>

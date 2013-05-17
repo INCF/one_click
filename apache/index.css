@@ -21,7 +21,7 @@ body {
 
 #header h1, #body #main {
 /*    border: 1px solid #000;*/
-    margin-left: 200px;
+    margin-left: 250px;
 }
 
 #body #main {
@@ -33,7 +33,7 @@ body {
 }
 
 #leftnav {
-    width: 190px;
+    width: 240px;
     float: left;
 }
 
@@ -61,6 +61,14 @@ body {
 
 #body #leftnav ul {
     margin-top: 1em;
+}
+
+#body #leftnav ul.deps {
+	margin-top: 0;
+}
+
+#body #leftnav ul.deps li {
+	padding-left: 1em;
 }
 
 #main ul li {
